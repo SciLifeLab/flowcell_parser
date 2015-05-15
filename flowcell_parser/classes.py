@@ -53,7 +53,7 @@ class XTenParser(object):
         if self.runinfo:
             self.obj['RunInfo']=self.runinfo.data
         if self.runparameters:
-            self.obj['RunParameters']=self.runparameters.data
+            self.obj.update(self.runparameters.data)
         if self.samplesheet:
             self.obj['samplesheet_csv']=self.samplesheet.data
         if self.lanebarcodes:
