@@ -48,7 +48,7 @@ class XTenParser(object):
     def create_db_obj(self):
         self.obj={}
         bits=os.path.basename(self.path).split('_')
-        name="_".join(bits[0], bits[-1])
+        name="{0}_{1}".format(bits[0], bits[-1])
         self.obj['name']=name
         if self.runinfo:
             self.obj['RunInfo']=self.runinfo.data
