@@ -3,6 +3,58 @@ import os
 import csv
 import xml.etree.ElementTree as ET
 
+from bs4 import BeautifulSoup #html parser
+
+
+class XTenLaneBarcodeParser(object):
+    def __init__(self, path ):
+        if os.path.exists(path):
+            self.path=path
+            self.parse()
+        else:
+            raise os.error("XTen DemultiplexingStats.xml cannot be found at {0}".format(path))
+
+    def parse(self):
+        self.sample_data=[]
+        self.flowcell_data={}
+        with open(self.path) as htmlfile:
+            bsoup=BeautifulSoup(htmlfile)
+            flowcell_table=bsoup.find_all('table')[1]
+            lane_table=bsoup.find_all('table')[2]
+
+            
+            keys=[]
+            values=[]
+            for th in flowcell_table.find_all('th'):
+                keys.append(th.text)
+            for td in flowcell_table.find_all('td'):
+                values.append(td.text)
+
+            self.flowcell_data = dict(zip(keys, values))
+
+            keys=[]
+            rows=lane_table.find_all('tr')
+            for row in rows[1:]:
+            #I want to skip the first row
+                if len(row.find_all('th')):
+                    #this is the header row
+                    for th in row.find_all('th'):
+                        key=th.text.replace('<br/>', ' ').replace('&gt;', '>')
+                        if key == '#':
+                            key='Lane'
+
+                        keys.append(key)
+                elif len(row.find_all('td')):
+                    values=[]
+                    for td in row.find_all('td'):
+                        values.append(td.text)
+
+                    d=dict(zip(keys,values))
+                    self.sample_data.append(d)
+
+
+
+
 class XTenDemultiplexingStatsParser(object):
     def __init__(self, path ):
         if os.path.exists(path):
@@ -139,8 +191,6 @@ class XTenRunParametersParser(object):
 
 def xml_to_dict(root):
     current=None
-    if root.attrib:
-        current= root.attrib
 
     children=list(root)
     if children:
@@ -156,6 +206,14 @@ def xml_to_dict(root):
             else:
                 lower=xml_to_dict(child)
                 current.update(lower)
+    if root.attrib:
+        if current:
+            if [x in current for x in root.attrib]:
+                current.update(root.attrib)
+            else:
+                current.update({'attribs':root.attribs})
+        else:
+            current= root.attrib
     if root.text and root.text.strip() != "":
         if current:
             if 'text' not in current:
