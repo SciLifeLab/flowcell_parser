@@ -2,8 +2,68 @@
 import os
 import csv
 import xml.etree.ElementTree as ET
+import logging
 
 from bs4 import BeautifulSoup #html parser
+
+class XTenParser(object):
+    def __init__(self, path):
+        if os.path.exists(path):
+            self.log=logging.get_logger('XTenParser')
+            self.path=path
+            self.parse()
+            self.create_db_obj()
+        else:
+            raise os.error("XTen flowcell cannot be found at {0}".format(path))
+
+    def parse(self):
+        fc_name=self.path[-9:]
+        rinfo_path=os.path.join(self.path, 'RunInfo.xml')
+        rpar_path=os.path.join(self.path, 'runParameters.xml')
+        ss_path=os.path.join(self.path, 'SampleSheet.csv')
+        lb_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
+
+        try:
+            self.runinfo=XTenRunInfoParser(rinfo_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.runinfo=None
+        try:
+            self.runparameters=XTenRunParametersParser(rpar_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.runParameters=None
+        try:
+            self.samplesheet=XTenSampleSheetParser(ss_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.samplesheet=None
+        try:
+            self.lanebarcodes=XTenLaneBarcodeParser(lb_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.lanebarcodes=None
+
+
+    def create_db_obj(self):
+        self.obj={}
+        bits=os.path.basename(self.path).split('_')
+        name="_".join(bits[0], bits[-1])
+        self.obj['name']=name
+        if self.runinfo:
+            self.obj['RunInfo']=self.runinfo.data
+        if self.runparameters:
+            self.obj['RunParameters']=self.runparameters.data
+        if self.samplesheet:
+            self.obj['samplesheet_csv']=self.samplesheet.data
+        if self.lanebarcodes:
+            self.obj['illumina']={}
+            self.obj['illumina']['Demultiplex_Stats']={}
+            self.obj['illumina']['Demultiplex_Stats']['Barcode_lane_statistics']=self.lanebarcodes.sample_data
+            self.obj['illumina']['Demultiplex_Stats']['Flowcell_stats']=self.lanebarcodes.flowcell_data
+        
+
+
 
 
 class XTenLaneBarcodeParser(object):
@@ -12,7 +72,7 @@ class XTenLaneBarcodeParser(object):
             self.path=path
             self.parse()
         else:
-            raise os.error("XTen DemultiplexingStats.xml cannot be found at {0}".format(path))
+            raise os.error("XTen laneBarcode.html cannot be found at {0}".format(path))
 
     def parse(self):
         self.sample_data=[]
@@ -38,10 +98,16 @@ class XTenLaneBarcodeParser(object):
             #I want to skip the first row
                 if len(row.find_all('th')):
                     #this is the header row
+                    seen_clusters=False
                     for th in row.find_all('th'):
                         key=th.text.replace('<br/>', ' ').replace('&gt;', '>')
                         if key == '#':
                             key='Lane'
+                        elif key == 'Clusters':
+                            if not seen_clusters:
+                                key= 'Raw Clusters'
+                                seen_clusters=True
+
 
                         keys.append(key)
                 elif len(row.find_all('td')):

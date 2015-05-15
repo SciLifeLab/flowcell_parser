@@ -28,5 +28,10 @@ def test_laneBarcode():
     k=classes.XTenLaneBarcodeParser('../test_data/laneBarcode.html')
     pprint.pprint(k.flowcell_data)
     pprint.pprint(k.sample_data)
-#test_demuxstats()
-test_laneBarcode()
+
+def test_parser():
+    k=classes.XTenParser('/srv/illumina/HiSeq_X_data/150424_ST-E00214_0031_BH2WY7CCXX')
+    pprint.pprint(k.obj)
+
+
+test_parser()
