@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup #html parser
 class XTenParser(object):
     def __init__(self, path):
         if os.path.exists(path):
-            self.log=logging.getlogger('XTenParser')
+            self.log=logging.getLogger('XTenParser')
             self.path=path
             self.parse()
             self.create_db_obj()
