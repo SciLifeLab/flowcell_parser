@@ -52,8 +52,12 @@ class XTenParser(object):
         self.obj['name']=name
         if self.runinfo:
             self.obj['RunInfo']=self.runinfo.data
+            if self.runinfo.recipe:
+                self.obj['run_setup']=self.runinfo.recipe
         if self.runparameters:
             self.obj.update(self.runparameters.data)
+            if self.runparameters.recipe:
+                self.obj['run_setup']=self.runparameters.recipe
         if self.samplesheet:
             self.obj['samplesheet_csv']=self.samplesheet.data
         if self.lanebarcodes:
@@ -207,6 +211,7 @@ class XTenRunInfoParser(object):
     """
     def __init__(self, path ):
         self.data={}
+        self.recipe=None
         self.path=path
         if os.path.exists(path):
             self.parse()
@@ -228,8 +233,8 @@ class XTenRunInfoParser(object):
             data['Reads'].append(read.attrib)
         layout=run.find('FlowcellLayout')
         data['FlowcellLayout']=layout.attrib
-
         self.data=data
+        self.recipe=make_run_recipe(self.data.get('Reads', {}))
 
         
         
@@ -242,6 +247,7 @@ class XTenRunParametersParser(object):
 
     def __init__(self, path ):
         self.data={}
+        self.recipe=None
         self.path=path
         if os.path.exists(path):
             self.parse()
@@ -253,7 +259,28 @@ class XTenRunParametersParser(object):
         tree=ET.parse(self.path)
         root = tree.getroot()
         self.data=xml_to_dict(root)
+        self.recipe=make_run_recipe(self.data.get('Setup', {}).get('Reads', {}).get('Read', {}))
         
+        
+
+def make_run_recipe(reads):
+    nb_reads=0
+    nb_indexed_reads=0
+    numCycles=0
+    for read in reads:
+        nb_reads+=1
+        if read['IsIndexedRead'] == 'Y':
+            nb_indexed_reads+=1
+        else:
+            if numCycles and numCycles != read['NumCycles']:
+                logging.warn("NumCycles in not coherent")
+            else:
+                numCycles = read['NumCycles']
+
+    if reads:
+        return "{0}x{1}".format(nb_reads-nb_indexed_reads, numCycles)
+    return None
+
 
 def xml_to_dict(root):
     current=None
