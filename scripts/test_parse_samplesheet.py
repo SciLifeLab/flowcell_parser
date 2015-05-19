@@ -5,23 +5,23 @@ import pprint
 
 
 def test_samplesheet():
-    k=classes.XTenSampleSheetParser('example_xten_flowcell')
+    k=classes.XTenSampleSheetParser('../test_data/150424_ST-E00214_0031_BH2WY7CCXX/SampleSheet.csv')
     pprint.pprint(k.data)
     print k.header
     print k.settings
     print k.reads
 
 def test_runinfo():
-    k=classes.XTenRunInfoParser('RunInfo.xml')
+    k=classes.XTenRunInfoParser('../test_data/150424_ST-E00214_0031_BH2WY7CCXX/RunInfo.xml')
     pprint.pprint(k.data)
 
 def test_runparameters():
-    k=classes.XTenRunParametersParser('../test_data/runParameters.xml')
+    k=classes.XTenRunParametersParser('../test_data/150424_ST-E00214_0031_BH2WY7CCXX/runParameters.xml')
     pprint.pprint(k.data)
     
 
 def test_demuxstats():
-    k=classes.XTenDemultiplexingStatsParser('../test_data/DemultiplexingStats.xml')
+    k=classes.XTenDemultiplexingStatsParser('../test_data/150424_ST-E00214_0031_BH2WY7CCXX/DemultiplexingStats.xml')
     pprint.pprint(k.data)
 
 def test_laneBarcode():
@@ -34,4 +34,4 @@ def test_parser():
     pprint.pprint(k.obj)
 
 
-test_parser()
+test_samplesheet()

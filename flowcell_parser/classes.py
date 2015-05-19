@@ -189,7 +189,7 @@ class XTenSampleSheetParser(object):
                     linedict[field]=row[field]
                 data.append(linedict)
 
-            self.datafields=reads.fieldnames
+            self.datafields=reader.fieldnames
             self.data=data
             self.settings=settings
             self.header=header
