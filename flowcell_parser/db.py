@@ -2,7 +2,7 @@ import couchdb
 import yaml
 import logging
 
-log=logging.getlogger(__name__)
+log=logging.getLogger(__name__)
 
 
 def setupServer(conf):

@@ -26,7 +26,7 @@ def main(args):
     couch = db.setupServer(conf)
     db=couch['x_flowcells']
     parser=cl.XTenParser(args.flowcell)
-    db.update_doc(db,parser.obj, log)
+    db.update_doc(db,parser.obj)
 
 
 
