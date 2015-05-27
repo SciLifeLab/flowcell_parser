@@ -1,2 +1,2 @@
 flowcell_parser
-beautiful-soup==4.3.2
+beautifulsoup4
