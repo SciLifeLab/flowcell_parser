@@ -17,7 +17,7 @@ def setupLog(args):
     return mainlog
 
 def get_conf(conf_file):
-    with open(conf,'r') as f:
+    with open(conf_file,'r') as f:
         return yaml.load(f)
 
 def main(args):
