@@ -15,6 +15,8 @@ setup(name = "flowcell_parser",
     author_email = "denis.moreno@scilifelab.se",
     description = "Fetches data from demultiplexed flowcells and pushes it into statusdb",
     packages=find_packages(),
-    scripts = glob.glob('scripts/*.py'))
+    scripts = glob.glob('scripts/*.py'),
+    install_requires=install_requires
+    )
 
 

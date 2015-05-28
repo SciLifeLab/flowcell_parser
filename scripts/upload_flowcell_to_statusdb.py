@@ -4,7 +4,7 @@ import logging
 import os
 import yaml
 import flowcell_parser.classes as cl
-import flowcell_parser.db as db
+import flowcell_parser.db as DB
 
 
 def setupLog(args):
@@ -23,10 +23,10 @@ def get_conf(conf_file):
 def main(args):
     log = setupLog(args)
     conf=get_conf(args.conf)
-    couch = db.setupServer(conf)
+    couch = DB.setupServer(conf)
     db=couch['x_flowcells']
     parser=cl.XTenParser(args.flowcell)
-    db.update_doc(db,parser.obj)
+    DB.update_doc(db,parser.obj)
 
 
 
