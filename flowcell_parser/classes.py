@@ -26,7 +26,7 @@ class XTenParser(object):
 
     def parse(self):
         """Tries to parse as many files as possible from a run folder"""
-        fc_name=self.path[-9:]
+        fc_name=os.path.basename(os.path.abspath(self.path)).split('_')[-1][1:]
         rinfo_path=os.path.join(self.path, 'RunInfo.xml')
         rpar_path=os.path.join(self.path, 'runParameters.xml')
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
