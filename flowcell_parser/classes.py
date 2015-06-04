@@ -31,6 +31,7 @@ class XTenParser(object):
         rpar_path=os.path.join(self.path, 'runParameters.xml')
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
         lb_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
+        ln_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
 
         try:
             self.runinfo=XTenRunInfoParser(rinfo_path)
@@ -52,6 +53,11 @@ class XTenParser(object):
         except OSError as e:
             self.log.info(str(e))
             self.lanebarcodes=None
+        try:
+            self.lanes=XTenLaneBarcodeParser(ln_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.lanes=None
 
 
     def create_db_obj(self):
@@ -74,6 +80,8 @@ class XTenParser(object):
             self.obj['illumina']['Demultiplex_Stats']={}
             self.obj['illumina']['Demultiplex_Stats']['Barcode_lane_statistics']=self.lanebarcodes.sample_data
             self.obj['illumina']['Demultiplex_Stats']['Flowcell_stats']=self.lanebarcodes.flowcell_data
+            if self.lanes:
+                self.obj['illumina']['Demultiplex_Stats']['Lanes_stats']=self.lanes.sample_data
         
 
 
