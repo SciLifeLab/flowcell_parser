@@ -173,7 +173,7 @@ class XTenSampleSheetParser(object):
         else:
             raise os.error("XTen sample sheet cannot be found at {0}".format(path))
 
-    def generate_clean_samplesheet(self, fields_to_remove=None, rename_samples=False):
+    def generate_clean_samplesheet(self, fields_to_remove=None, rename_samples=True):
         """Will generate a 'clean' samplesheet, : the given fields will be removed. if rename_samples is True, samples prepended with 'Sample_'
         are renamed to match the sample name"""
         output=""
@@ -195,8 +195,11 @@ class XTenSampleSheetParser(object):
         for line in self.data:
             line_ar=[]
             for field in datafields:
-                if rename_samples and 'Sample' in field and line[field].startswith('Sample_'):
-                    line_ar.append(line[field].replace('Sample_',''))
+                if rename_samples and 'SampleID' in field :
+                    try:
+                        line_ar.append('Sample_{}'.format(line['SampleName'])))
+                    except:
+                        line_ar.append('Sample_{}'.format(line['SampleID'])))
                 else:
                     line_ar.append(line[field])
             output+=",".join(line_ar)
