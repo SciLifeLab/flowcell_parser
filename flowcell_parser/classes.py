@@ -197,9 +197,9 @@ class XTenSampleSheetParser(object):
             for field in datafields:
                 if rename_samples and 'SampleID' in field :
                     try:
-                        line_ar.append('Sample_{}'.format(line['SampleName'])))
+                        line_ar.append('Sample_{}'.format(line['SampleName']))
                     except:
-                        line_ar.append('Sample_{}'.format(line['SampleID'])))
+                        line_ar.append('Sample_{}'.format(line['SampleID']))
                 else:
                     line_ar.append(line[field])
             output+=",".join(line_ar)
