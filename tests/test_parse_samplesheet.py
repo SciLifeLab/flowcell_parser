@@ -34,6 +34,7 @@ def test_parser():
     k=classes.XTenParser('../test_data/150424_ST-E00214_0031_BH2WY7CCXX')
     assert(k.obj is not None)
     assert(k.obj is not {})
+    assert(k.obj['run_setup'] is not None)
     assert(k.runinfo.data is not None)
     assert(k.runparameters.data is not None)
     assert(k.samplesheet.data is not None)
