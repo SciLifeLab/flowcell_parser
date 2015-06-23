@@ -1,9 +1,12 @@
 
+import re
 import os
 import csv
 import xml.etree.ElementTree as ET
 import logging
+import glob
 
+from collections import OrderedDict
 from bs4 import BeautifulSoup #html parser
 
 class XTenParser(object):
@@ -32,6 +35,7 @@ class XTenParser(object):
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
         lb_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
         ln_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
+        demux_path=os.path.join(self.path, 'Demultiplexing')
 
         try:
             self.runinfo=XTenRunInfoParser(rinfo_path)
@@ -58,6 +62,11 @@ class XTenParser(object):
         except OSError as e:
             self.log.info(str(e))
             self.lanes=None
+        try:
+            self.undet=XTenUndeterminedParser(demux_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.undet=None
 
 
     def create_db_obj(self):
@@ -82,10 +91,40 @@ class XTenParser(object):
             self.obj['illumina']['Demultiplex_Stats']['Flowcell_stats']=self.lanebarcodes.flowcell_data
             if self.lanes:
                 self.obj['illumina']['Demultiplex_Stats']['Lanes_stats']=self.lanes.sample_data
+
+        if self.undet:
+            self.obj['Undetermined']=self.undet.result
         
 
 
 
+class XTenUndeterminedParser(object):
+    def __init__(self, path ):
+        if os.path.exists(path):
+            self.path=path
+            self.result={}
+            self.parse()
+        else:
+            raise os.error("Demultiplexing folder cannot be found at {0}".format(path))
+
+    def parse(self):
+        #will only save the 50 more frequent indexes
+        pattern=re.compile('index_count_L([0-9]).tsv')
+        for file in glob.glob(os.path.join(self.path, 'index_count_L?.tsv')):
+                lane_nb=pattern.search(file).group(1)
+                self.result[lane_nb]=OrderedDict()
+                with open(file, 'r') as f:
+                    total=0
+                    for line in f:
+                        components=line.split('\t')
+                        if len(self.result[lane_nb].keys())< 50:
+                            self.result[lane_nb][components[0]]=int(components[1])
+                        total=total+int(components[1])
+
+                    self.result[lane_nb]['TOTAL']=total
+
+                        
+                    
 
 class XTenLaneBarcodeParser(object):
     def __init__(self, path ):

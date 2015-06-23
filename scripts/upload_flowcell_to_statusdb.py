@@ -38,8 +38,8 @@ if __name__=='__main__':
     help = "path to the flowcell to upload")
 
     parser.add_argument("-c", "--conf", dest="conf", 
-    default=os.path.join(os.environ['HOME'],'opt/config/post_process.yaml'), 
-    help = "Config file.  Default: ~/opt/config/post_process.yaml")
+    default=os.path.join(os.environ['HOME'],'.taca/taca.yaml'), 
+    help = "Config file.  Default: ~/.taca/taca.yaml")
 
     parser.add_argument("-l", "--log", dest="logfile", 
     default=os.path.join(os.environ['HOME'],'flowcell_upload.log'), 
