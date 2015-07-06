@@ -1,15 +1,26 @@
 
+import re
 import os
 import csv
 import xml.etree.ElementTree as ET
 import logging
+import glob
 
+from collections import OrderedDict
 from bs4 import BeautifulSoup #html parser
 
 class XTenParser(object):
+    """Parses an xten run files. It generates data for statusdb
+    notable attributes :
+    
+    :XTenRunInfoParser runinfo: see XTenRunInfo
+    :XTenRunParametersParser runparameters: see XTenRunParametersParser
+    :XTenSampleSheetParser samplesheet: see XTenSampleSheetParser
+    :XTenLaneBarcodeParser lanebarcodes: see XTenLaneBarcodeParser
+    """
     def __init__(self, path):
         if os.path.exists(path):
-            self.log=logging.getLogger('XTenParser')
+            self.log=logging.getLogger(__name__)
             self.path=path
             self.parse()
             self.create_db_obj()
@@ -17,11 +28,14 @@ class XTenParser(object):
             raise os.error("XTen flowcell cannot be found at {0}".format(path))
 
     def parse(self):
-        fc_name=self.path[-9:]
+        """Tries to parse as many files as possible from a run folder"""
+        fc_name=os.path.basename(os.path.abspath(self.path)).split('_')[-1][1:]
         rinfo_path=os.path.join(self.path, 'RunInfo.xml')
         rpar_path=os.path.join(self.path, 'runParameters.xml')
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
         lb_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
+        ln_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
+        demux_path=os.path.join(self.path, 'Demultiplexing')
 
         try:
             self.runinfo=XTenRunInfoParser(rinfo_path)
@@ -43,17 +57,31 @@ class XTenParser(object):
         except OSError as e:
             self.log.info(str(e))
             self.lanebarcodes=None
+        try:
+            self.lanes=XTenLaneBarcodeParser(ln_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.lanes=None
+        try:
+            self.undet=XTenUndeterminedParser(demux_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.undet=None
 
 
     def create_db_obj(self):
         self.obj={}
-        bits=os.path.basename(self.path).split('_')
+        bits=os.path.basename(os.path.abspath(self.path)).split('_')
         name="{0}_{1}".format(bits[0], bits[-1])
         self.obj['name']=name
         if self.runinfo:
             self.obj['RunInfo']=self.runinfo.data
+            if self.runinfo.recipe:
+                self.obj['run_setup']=self.runinfo.recipe
         if self.runparameters:
             self.obj.update(self.runparameters.data)
+            if self.runparameters.recipe:
+                self.obj['run_setup']=self.runparameters.recipe
         if self.samplesheet:
             self.obj['samplesheet_csv']=self.samplesheet.data
         if self.lanebarcodes:
@@ -61,10 +89,42 @@ class XTenParser(object):
             self.obj['illumina']['Demultiplex_Stats']={}
             self.obj['illumina']['Demultiplex_Stats']['Barcode_lane_statistics']=self.lanebarcodes.sample_data
             self.obj['illumina']['Demultiplex_Stats']['Flowcell_stats']=self.lanebarcodes.flowcell_data
+            if self.lanes:
+                self.obj['illumina']['Demultiplex_Stats']['Lanes_stats']=self.lanes.sample_data
+
+        if self.undet:
+            self.obj['Undetermined']=self.undet.result
         
 
 
 
+class XTenUndeterminedParser(object):
+    def __init__(self, path ):
+        if os.path.exists(path):
+            self.path=path
+            self.result={}
+            self.parse()
+        else:
+            raise os.error("Demultiplexing folder cannot be found at {0}".format(path))
+
+    def parse(self):
+        #will only save the 50 more frequent indexes
+        pattern=re.compile('index_count_L([0-9]).tsv')
+        for file in glob.glob(os.path.join(self.path, 'index_count_L?.tsv')):
+                lane_nb=pattern.search(file).group(1)
+                self.result[lane_nb]=OrderedDict()
+                with open(file, 'r') as f:
+                    total=0
+                    for line in f:
+                        components=line.split('\t')
+                        if len(self.result[lane_nb].keys())< 50:
+                            self.result[lane_nb][components[0]]=int(components[1])
+                        total=total+int(components[1])
+
+                    self.result[lane_nb]['TOTAL']=total
+
+                        
+                    
 
 class XTenLaneBarcodeParser(object):
     def __init__(self, path ):
@@ -146,10 +206,49 @@ class XTenSampleSheetParser(object):
     .data : a list of the values under the [Data] section. These values are stored in a dict format
     .datafields : a list of field names for the data section"""
     def __init__(self, path ):
+        self.log=logging.getLogger(__name__)
         if os.path.exists(path):
             self.parse(path)
         else:
             raise os.error("XTen sample sheet cannot be found at {0}".format(path))
+
+    def generate_clean_samplesheet(self, fields_to_remove=None, rename_samples=True):
+        """Will generate a 'clean' samplesheet, : the given fields will be removed. if rename_samples is True, samples prepended with 'Sample_'
+        are renamed to match the sample name"""
+        output=""
+        if not fields_to_remove:
+            fields_to_remove=[]
+        #Header
+        output+="[Header]{}".format(os.linesep)
+        for field in self.header:
+            output+="{},{}".format(field.rstrip(), self.header[field].rstrip())
+            output+=os.linesep
+        #Data
+        output+="[Data]{}".format(os.linesep)
+        datafields=[]
+        for field in self.datafields:
+            if field not in fields_to_remove:
+                datafields.append(field)
+        output+=",".join(datafields)
+        output+=os.linesep
+        for line in self.data:
+            line_ar=[]
+            for field in datafields:
+                if rename_samples and 'SampleID' in field :
+                    try:
+                        line_ar.append('Sample_{}'.format(line['SampleName']))
+                    except:
+                        line_ar.append('Sample_{}'.format(line['SampleID']))
+                else:
+                    line_ar.append(line[field])
+            output+=",".join(line_ar)
+            output+=os.linesep
+
+        return output
+
+
+
+
 
     def parse(self, path):
         flag=None
@@ -170,7 +269,12 @@ class XTenSampleSheetParser(object):
                     flag='data'
                 else:
                     if flag == 'HEADER':
-                       header[line.split(',')[0]]=line.split(',')[1] 
+                        try:
+                            header[line.split(',')[0]]=line.split(',')[1] 
+                        except IndexError as e:
+                            self.log.error("file {} does not seem to be comma separated.".format(path))
+                            raise RunTimeError("Could not parse the samplesheet, does not seem to be comma separated")
+
                     elif flag == 'READS':
                         reads.append(line.split(',')[0])
                     elif flag == 'SETTINGS':
@@ -185,7 +289,7 @@ class XTenSampleSheetParser(object):
                     linedict[field]=row[field]
                 data.append(linedict)
 
-            self.datafields=reads.fieldnames
+            self.datafields=reader.fieldnames
             self.data=data
             self.settings=settings
             self.header=header
@@ -207,6 +311,7 @@ class XTenRunInfoParser(object):
     """
     def __init__(self, path ):
         self.data={}
+        self.recipe=None
         self.path=path
         if os.path.exists(path):
             self.parse()
@@ -228,8 +333,8 @@ class XTenRunInfoParser(object):
             data['Reads'].append(read.attrib)
         layout=run.find('FlowcellLayout')
         data['FlowcellLayout']=layout.attrib
-
         self.data=data
+        self.recipe=make_run_recipe(self.data.get('Reads', {}))
 
         
         
@@ -242,6 +347,7 @@ class XTenRunParametersParser(object):
 
     def __init__(self, path ):
         self.data={}
+        self.recipe=None
         self.path=path
         if os.path.exists(path):
             self.parse()
@@ -253,7 +359,30 @@ class XTenRunParametersParser(object):
         tree=ET.parse(self.path)
         root = tree.getroot()
         self.data=xml_to_dict(root)
+        self.recipe=make_run_recipe(self.data.get('Setup', {}).get('Reads', {}).get('Read', {}))
         
+        
+
+def make_run_recipe(reads):
+    """Based on either runParameters of RunInfo, gathers the information as to how many
+    readings are done and their length, e.g. 2x150"""
+    nb_reads=0
+    nb_indexed_reads=0
+    numCycles=0
+    for read in reads:
+        nb_reads+=1
+        if read['IsIndexedRead'] == 'Y':
+            nb_indexed_reads+=1
+        else:
+            if numCycles and numCycles != read['NumCycles']:
+                logging.warn("NumCycles in not coherent")
+            else:
+                numCycles = read['NumCycles']
+
+    if reads:
+        return "{0}x{1}".format(nb_reads-nb_indexed_reads, numCycles)
+    return None
+
 
 def xml_to_dict(root):
     current=None
