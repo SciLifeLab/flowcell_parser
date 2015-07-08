@@ -231,6 +231,11 @@ class XTenSampleSheetParser(object):
                 datafields.append(field)
         output+=",".join(datafields)
         output+=os.linesep
+            
+        #fix to avoid sample names that end with __qPCR_ which is annoying
+        for line in self.data:
+            line['SampleName'] = re.sub('__qPCR_$', '', line['SampleName'])
+
         for line in self.data:
             line_ar=[]
             for field in datafields:
