@@ -234,7 +234,8 @@ class XTenSampleSheetParser(object):
             
         #fix to avoid sample names that end with __qPCR_ which is annoying
         for line in self.data:
-            line['SampleName'] = re.sub('__qPCR_$', '', line['SampleName'])
+            if 'SampleName'in line:
+                line['SampleName'] = re.sub('__qPCR_$', '', line['SampleName'])
 
         for line in self.data:
             line_ar=[]
