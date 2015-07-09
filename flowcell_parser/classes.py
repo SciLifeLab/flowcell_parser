@@ -212,6 +212,16 @@ class XTenSampleSheetParser(object):
         else:
             raise os.error("XTen sample sheet cannot be found at {0}".format(path))
 
+    def remove_qPCR_suffix_from_SampleName_samplesheet(self):
+        """Will remove from SampleName filed the suffix __qPCR_ that time to time appears in our SampleSheets
+            In case SampleName not in SampleSheet no change will happen
+        """
+        for line in self.data:
+            if 'SampleName'in line:
+                line['SampleName'] = re.sub('__qPCR_$', '', line['SampleName'])
+
+
+
     def generate_clean_samplesheet(self, fields_to_remove=None, rename_samples=True):
         """Will generate a 'clean' samplesheet, : the given fields will be removed. if rename_samples is True, samples prepended with 'Sample_'
         are renamed to match the sample name"""
@@ -231,11 +241,6 @@ class XTenSampleSheetParser(object):
                 datafields.append(field)
         output+=",".join(datafields)
         output+=os.linesep
-            
-        #fix to avoid sample names that end with __qPCR_ which is annoying
-        for line in self.data:
-            if 'SampleName'in line:
-                line['SampleName'] = re.sub('__qPCR_$', '', line['SampleName'])
 
         for line in self.data:
             line_ar=[]
