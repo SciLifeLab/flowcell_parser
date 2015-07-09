@@ -212,17 +212,11 @@ class XTenSampleSheetParser(object):
         else:
             raise os.error("XTen sample sheet cannot be found at {0}".format(path))
 
-    def remove_qPCR_suffix_from_SampleName_samplesheet(self):
-        """Will remove from SampleName filed the suffix __qPCR_ that time to time appears in our SampleSheets
-            In case SampleName not in SampleSheet no change will happen
-        """
-        for line in self.data:
-            if 'SampleName'in line:
-                line['SampleName'] = re.sub('__qPCR_$', '', line['SampleName'])
 
 
 
-    def generate_clean_samplesheet(self, fields_to_remove=None, rename_samples=True):
+
+    def generate_clean_samplesheet(self, fields_to_remove=None, rename_samples=True, rename_qPCR_suffix = False, fields_qPCR= None):
         """Will generate a 'clean' samplesheet, : the given fields will be removed. if rename_samples is True, samples prepended with 'Sample_'
         are renamed to match the sample name"""
         output=""
@@ -241,20 +235,28 @@ class XTenSampleSheetParser(object):
                 datafields.append(field)
         output+=",".join(datafields)
         output+=os.linesep
-
         for line in self.data:
             line_ar=[]
             for field in datafields:
+                value = line[field]
                 if rename_samples and 'SampleID' in field :
                     try:
-                        line_ar.append('Sample_{}'.format(line['SampleName']))
+                        if rename_qPCR_suffix and 'SampleName' in fields_qPCR:
+                            #substitute SampleID with SampleName, add Sample_ as prefix and remove __qPCR_ suffix
+                            value =re.sub('__qPCR_$', '', 'Sample_{}'.format(line['SampleName']))
+                        else:
+                            #substitute SampleID with SampleName, add Sample_ as prefix
+                            value ='Sample_{}'.format(line['SampleName'])
                     except:
-                        line_ar.append('Sample_{}'.format(line['SampleID']))
-                else:
-                    line_ar.append(line[field])
+                        #otherwise add Sample_ as prefix
+                        value = 'Sample_{}'.format(line['SampleID'])
+                elif rename_qPCR_suffix and field in fields_qPCR:
+                    value = re.sub('__qPCR_$', '', line[field])
+
+                line_ar.append(value)
+
             output+=",".join(line_ar)
             output+=os.linesep
-
         return output
 
 
