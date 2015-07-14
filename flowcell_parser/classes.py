@@ -9,14 +9,14 @@ import glob
 from collections import OrderedDict
 from bs4 import BeautifulSoup #html parser
 
-class XTenParser(object):
-    """Parses an xten run files. It generates data for statusdb
+class RunParser(object):
+    """Parses an Illumina run folder. It generates data for statusdb
     notable attributes :
     
-    :XTenRunInfoParser runinfo: see XTenRunInfo
-    :XTenRunParametersParser runparameters: see XTenRunParametersParser
-    :XTenSampleSheetParser samplesheet: see XTenSampleSheetParser
-    :XTenLaneBarcodeParser lanebarcodes: see XTenLaneBarcodeParser
+    :RunInfoParser runinfo: see RunInfo
+    :RunParametersParser runparameters: see RunParametersParser
+    :SampleSheetParser samplesheet: see SampleSheetParser
+    :LaneBarcodeParser lanebarcodes: see LaneBarcodeParser
     """
     def __init__(self, path):
         if os.path.exists(path):
@@ -25,45 +25,47 @@ class XTenParser(object):
             self.parse()
             self.create_db_obj()
         else:
-            raise os.error("XTen flowcell cannot be found at {0}".format(path))
+            raise os.error(" flowcell cannot be found at {0}".format(path))
 
-    def parse(self):
+
+
+    def parse(self, demultiplexingDir='Demultiplexing'):
         """Tries to parse as many files as possible from a run folder"""
         fc_name=os.path.basename(os.path.abspath(self.path)).split('_')[-1][1:]
         rinfo_path=os.path.join(self.path, 'RunInfo.xml')
         rpar_path=os.path.join(self.path, 'runParameters.xml')
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
-        lb_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
-        ln_path=os.path.join(self.path, 'Demultiplexing', 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
-        demux_path=os.path.join(self.path, 'Demultiplexing')
+        lb_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
+        ln_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
+        demux_path=os.path.join(self.path, demultiplexingDir)
 
         try:
-            self.runinfo=XTenRunInfoParser(rinfo_path)
+            self.runinfo=RunInfoParser(rinfo_path)
         except OSError as e:
             self.log.info(str(e))
             self.runinfo=None
         try:
-            self.runparameters=XTenRunParametersParser(rpar_path)
+            self.runparameters=RunParametersParser(rpar_path)
         except OSError as e:
             self.log.info(str(e))
             self.runParameters=None
         try:
-            self.samplesheet=XTenSampleSheetParser(ss_path)
+            self.samplesheet=SampleSheetParser(ss_path)
         except OSError as e:
             self.log.info(str(e))
             self.samplesheet=None
         try:
-            self.lanebarcodes=XTenLaneBarcodeParser(lb_path)
+            self.lanebarcodes=LaneBarcodeParser(lb_path)
         except OSError as e:
             self.log.info(str(e))
             self.lanebarcodes=None
         try:
-            self.lanes=XTenLaneBarcodeParser(ln_path)
+            self.lanes=LaneBarcodeParser(ln_path)
         except OSError as e:
             self.log.info(str(e))
             self.lanes=None
         try:
-            self.undet=XTenUndeterminedParser(demux_path)
+            self.undet=UndeterminedParser(demux_path)
         except OSError as e:
             self.log.info(str(e))
             self.undet=None
@@ -98,7 +100,7 @@ class XTenParser(object):
 
 
 
-class XTenUndeterminedParser(object):
+class UndeterminedParser(object):
     def __init__(self, path ):
         if os.path.exists(path):
             self.path=path
@@ -126,13 +128,13 @@ class XTenUndeterminedParser(object):
                         
                     
 
-class XTenLaneBarcodeParser(object):
+class LaneBarcodeParser(object):
     def __init__(self, path ):
         if os.path.exists(path):
             self.path=path
             self.parse()
         else:
-            raise os.error("XTen laneBarcode.html cannot be found at {0}".format(path))
+            raise os.error(" laneBarcode.html cannot be found at {0}".format(path))
 
     def parse(self):
         self.sample_data=[]
@@ -181,13 +183,13 @@ class XTenLaneBarcodeParser(object):
 
 
 
-class XTenDemultiplexingStatsParser(object):
+class DemultiplexingStatsParser(object):
     def __init__(self, path ):
         if os.path.exists(path):
             self.path=path
             self.parse()
         else:
-            raise os.error("XTen DemultiplexingStats.xml cannot be found at {0}".format(path))
+            raise os.error(" DemultiplexingStats.xml cannot be found at {0}".format(path))
 
     def parse(self):
         data={}
@@ -196,8 +198,8 @@ class XTenDemultiplexingStatsParser(object):
         self.data=xml_to_dict(root)
 
 
-class XTenSampleSheetParser(object):
-    """Parses Xten Samplesheets, with their fake csv format.
+class SampleSheetParser(object):
+    """Parses  Samplesheets, with their fake csv format.
     Should be instancied with the samplesheet path as an argument.
 
     .header : a dict containing the info located under the [Header] section
@@ -210,7 +212,7 @@ class XTenSampleSheetParser(object):
         if os.path.exists(path):
             self.parse(path)
         else:
-            raise os.error("XTen sample sheet cannot be found at {0}".format(path))
+            raise os.error(" sample sheet cannot be found at {0}".format(path))
 
 
 
@@ -309,8 +311,8 @@ class XTenSampleSheetParser(object):
             self.reads=reads
 
 
-class XTenRunInfoParser(object):
-    """Parses Xten RunInfo.xml.
+class RunInfoParser(object):
+    """Parses  RunInfo.xml.
     Should be instancied with the file path as an argument.
 
     .data : a list of hand-picked values :
@@ -329,7 +331,7 @@ class XTenRunInfoParser(object):
         if os.path.exists(path):
             self.parse()
         else:
-            raise os.error("XTen run info cannot be found at {0}".format(path))
+            raise os.error(" run info cannot be found at {0}".format(path))
 
     def parse(self):
         data={}
@@ -351,7 +353,7 @@ class XTenRunInfoParser(object):
 
         
         
-class XTenRunParametersParser(object):
+class RunParametersParser(object):
     """Parses a runParameters.xml file.
        This is a much more general xml parser, it will build a dict from the xml data.
        Attributes might be replaced if children nodes have the same tag as the attributes
@@ -365,7 +367,7 @@ class XTenRunParametersParser(object):
         if os.path.exists(path):
             self.parse()
         else:
-            raise os.error("XTen run parameters cannot be found at {0}".format(path))
+            raise os.error(" run parameters cannot be found at {0}".format(path))
         
     def parse(self):
         data={}
