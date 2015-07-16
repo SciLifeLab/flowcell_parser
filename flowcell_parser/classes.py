@@ -351,6 +351,16 @@ class RunInfoParser(object):
         self.data=data
         self.recipe=make_run_recipe(self.data.get('Reads', {}))
 
+
+    def get_read_configuration(self):
+        """return a list of dicts containig the Read Configuration
+            """
+        readConfig = []
+        try:
+            readConfig = self.data['Reads']
+            return sorted(readConfig, key=lambda r: int(r.get("Number", 0)))
+        except IOError:
+            raise RuntimeError('Reads section not present in RunInfo. Check the FC folder.')
         
         
 class RunParametersParser(object):
