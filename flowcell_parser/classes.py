@@ -272,7 +272,8 @@ class SampleSheetParser(object):
         settings=[]
         csvlines=[]
         data=[]
-        with open(path) as csvfile:
+        flag= 'data' #in case of HiSeq samplesheet only data section is present
+        with open(path, 'rU') as csvfile:
             for line in csvfile.readlines():
                 if '[Header]' in line:
                     flag='HEADER'
