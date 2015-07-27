@@ -156,21 +156,11 @@ class LaneBarcodeParser(object):
 
             keys=[]
             rows=lane_table.find_all('tr')
-            for row in rows[1:]:
-            #I want to skip the first row
+            for row in rows[0:]:
                 if len(row.find_all('th')):
                     #this is the header row
-                    seen_clusters=False
                     for th in row.find_all('th'):
                         key=th.text.replace('<br/>', ' ').replace('&gt;', '>')
-                        if key == '#':
-                            key='Lane'
-                        elif key == 'Clusters':
-                            if not seen_clusters:
-                                key= 'Raw Clusters'
-                                seen_clusters=True
-
-
                         keys.append(key)
                 elif len(row.find_all('td')):
                     values=[]
