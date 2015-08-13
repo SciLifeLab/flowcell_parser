@@ -37,7 +37,7 @@ class RunParser(object):
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
         lb_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
         ln_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
-        demux_path=os.path.join(self.path, demultiplexingDir)
+        undeterminedStatsFolder = os.path.join(self.path, demultiplexingDir,  "Stats")
 
         try:
             self.runinfo=RunInfoParser(rinfo_path)
@@ -65,7 +65,7 @@ class RunParser(object):
             self.log.info(str(e))
             self.lanes=None
         try:
-            self.undet=UndeterminedParser(demux_path)
+            self.undet=DemuxSummaryParser(undeterminedStatsFolder)
         except OSError as e:
             self.log.info(str(e))
             self.undet=None
@@ -99,7 +99,7 @@ class RunParser(object):
         
 
 
-
+"""
 class UndeterminedParser(object):
     def __init__(self, path ):
         if os.path.exists(path):
@@ -124,8 +124,38 @@ class UndeterminedParser(object):
                         total=total+int(components[1])
 
                     self.result[lane_nb]['TOTAL']=total
+"""
 
-                        
+class DemuxSummaryParser(object):
+    def __init__(self, path):
+        if os.path.exists(path):
+            self.path=path
+            self.result={}
+            self.TOTAL = {}
+            self.parse()
+        else:
+            raise os.error("DemuxSummary folder {0} cannot be found".format(path))
+
+    def parse(self):
+        #will only save the 50 more frequent indexes
+        pattern=re.compile('DemuxSummaryF1L([0-9]).txt')
+        for file in glob.glob(os.path.join(self.path, 'DemuxSummaryF1L?.txt')):
+            lane_nb = pattern.search(file).group(1)
+            self.result[lane_nb]=OrderedDict()
+            self.TOTAL[lane_nb] = 0
+            with open(file, 'r') as f:
+                undeterminePart = False
+                for line in f:
+                    if not undeterminePart:
+                        if "### Columns:" in line:
+                            undeterminePart = True
+                    else:
+                        #it means I am readng the index_Sequence  Hit_Count
+                        components = line.rstrip().split('\t')
+                        if len(self.result[lane_nb].keys())< 50:
+                            self.result[lane_nb][components[0]] = int(components[1])
+                        self.TOTAL[lane_nb] += int(components[1])
+
                     
 
 class LaneBarcodeParser(object):
