@@ -113,7 +113,7 @@ class XTenUndeterminedParser(object):
         for file in glob.glob(os.path.join(self.path, 'index_count_L?.tsv')):
                 lane_nb=pattern.search(file).group(1)
                 self.result[lane_nb]=OrderedDict()
-                with open(file, 'r') as f:
+                with open(file, 'rU') as f:
                     total=0
                     for line in f:
                         components=line.split('\t')
@@ -137,7 +137,7 @@ class XTenLaneBarcodeParser(object):
     def parse(self):
         self.sample_data=[]
         self.flowcell_data={}
-        with open(self.path) as htmlfile:
+        with open(self.path, 'rU') as htmlfile:
             bsoup=BeautifulSoup(htmlfile)
             flowcell_table=bsoup.find_all('table')[1]
             lane_table=bsoup.find_all('table')[2]
@@ -270,7 +270,7 @@ class XTenSampleSheetParser(object):
         settings=[]
         csvlines=[]
         data=[]
-        with open(path) as csvfile:
+        with open(path, 'rU') as csvfile:
             for line in csvfile.readlines():
                 if '[Header]' in line:
                     flag='HEADER'
