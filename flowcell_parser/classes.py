@@ -117,7 +117,7 @@ class DemuxSummaryParser(object):
             lane_nb = pattern.search(file).group(1)
             self.result[lane_nb]=OrderedDict()
             self.TOTAL[lane_nb] = 0
-            with open(file, 'r') as f:
+            with open(file, 'rU') as f:
                 undeterminePart = False
                 for line in f:
                     if not undeterminePart:
@@ -143,7 +143,7 @@ class LaneBarcodeParser(object):
     def parse(self):
         self.sample_data=[]
         self.flowcell_data={}
-        with open(self.path) as htmlfile:
+        with open(self.path, 'rU') as htmlfile:
             bsoup=BeautifulSoup(htmlfile)
             flowcell_table=bsoup.find_all('table')[1]
             lane_table=bsoup.find_all('table')[2]
@@ -267,6 +267,7 @@ class SampleSheetParser(object):
         csvlines=[]
         data=[]
         flag= 'data' #in case of HiSeq samplesheet only data section is present
+
         with open(path, 'rU') as csvfile:
             for line in csvfile.readlines():
                 if '[Header]' in line:

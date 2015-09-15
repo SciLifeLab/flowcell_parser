@@ -1,4 +1,3 @@
-flowcell_parser
 beautifulsoup4
 couchdb
 pyyaml
