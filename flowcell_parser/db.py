@@ -10,7 +10,7 @@ def setupServer(conf):
     url="http://{0}:{1}@{2}:{3}".format(db_conf['username'], db_conf['password'], db_conf['url'], db_conf['port'])
     return couchdb.Server(url)
 
-def update_doc(db, obj):
+def update_doc(db, obj, over_write_db_entry=False):
     view = db.view('info/name')
     #If there is already a flowcell with that name in the DB
     if len(view[obj['name']].rows) == 1:
@@ -20,7 +20,9 @@ def update_doc(db, obj):
         doc_rev = remote_doc.pop('_rev')
         if remote_doc != obj:
             #if they are different, merge the old into the new
-            obj=merge(obj, remote_doc)
+            if not over_write_db_entry:
+                #do not merge if over_write option is specified
+                obj=merge(obj, remote_doc)
             obj['_id'] = doc_id
             obj['_rev'] = doc_rev
             db[doc_id] = obj 
