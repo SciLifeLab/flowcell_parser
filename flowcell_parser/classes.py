@@ -5,9 +5,11 @@ import csv
 import xml.etree.ElementTree as ET
 import logging
 import glob
+from datetime import datetime
 
 from collections import OrderedDict
 from bs4 import BeautifulSoup #html parser
+
 
 class RunParser(object):
     """Parses an Illumina run folder. It generates data for statusdb
@@ -38,6 +40,7 @@ class RunParser(object):
         lb_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
         ln_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
         undeterminedStatsFolder = os.path.join(self.path, demultiplexingDir,  "Stats")
+        cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
 
         try:
             self.runinfo=RunInfoParser(rinfo_path)
@@ -70,6 +73,12 @@ class RunParser(object):
             self.log.info(str(e))
             self.undet=None
 
+        try:
+            self.time_cycles = CycleTimesParser(cycle_times_log)
+        except OSError as e:
+            self.log.info(str(e))
+            self.time_cycles = None
+
 
     def create_db_obj(self):
         self.obj={}
@@ -96,6 +105,9 @@ class RunParser(object):
 
         if self.undet:
             self.obj['Undetermined']=self.undet.result
+
+        if self.time_cycles:
+            self.obj['time cycles'] = self.time_cycles
         
 
 
@@ -254,8 +266,6 @@ class SampleSheetParser(object):
             output+=",".join(line_ar)
             output+=os.linesep
         return output
-
-
 
 
 
@@ -441,5 +451,67 @@ def xml_to_dict(root):
             current=root.text
     return {root.tag:current}
 
-            
 
+class CycleTimesParser(object):
+    def __init__(self, path):
+        if os.path.exists(path):
+            self.path = path
+            self.cycles = []
+            self.parse()
+        else:
+            raise os.error("file {0} cannot be found".format(path))
+
+    def parse(self):
+        """
+        parse CycleTimes.txt and return ordered list of cycles
+            CycleTimes.txt contains records: <date> <time> <barcode> <cycle> <info>
+            one cycle contains a few records (defined by <cycle>)
+            parser goes over records and saves the first record of each cycle as start time
+            and the last record of each cycle as end time
+        """
+        data = []
+        date_format = '%m/%d/%Y-%H:%M:%S.%f'
+        with open(self.path, 'r') as file:
+            cycle_times = file.readlines()
+            # if file is empty, return
+            if not cycle_times:
+                return
+
+            # first line is header, don't read it
+            for cycle_line in cycle_times[1:]:
+                # split line into strings
+                cycle_list = cycle_line.split()
+                cycle_time_obj = {}
+                # parse datetime
+                cycle_time_obj['datetime'] = datetime.strptime("{date}-{time}".format(date=cycle_list[0], time=cycle_list[1]), date_format)
+                # parse cycle number
+                cycle_time_obj['cycle'] = int(cycle_list[3])
+                # add object in the list
+                data.append(cycle_time_obj)
+
+
+        # take the first record as current cycle
+        current_cycle = {
+            'cycle_number': data[0]['cycle'],
+            'start': data[0]['datetime'],
+            'end': data[0]['datetime']
+        }
+        # compare each record with current cycle (except the first one)
+        for record in data[1:]:
+            # if we are at the same cycle
+            if record['cycle'] == current_cycle['cycle_number']:
+                # override end of cycle with current record
+                current_cycle['end'] = record['datetime']
+            # if a new cycle starts
+            else:
+                # save previous cycle
+                self.cycles.append(current_cycle)
+                # initialize new current_cycle
+                current_cycle = {
+                    'cycle_number': record['cycle'],
+                    'start': record['datetime'],
+                    'end': record['datetime']
+                }
+        # the last records is not saved inside the loop
+        if current_cycle not in self.cycles:
+            self.cycles.append(current_cycle)
