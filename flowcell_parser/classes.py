@@ -284,7 +284,7 @@ class SampleSheetParser(object):
                             header[line.split(',')[0]]=line.split(',')[1] 
                         except IndexError as e:
                             self.log.error("file {} does not seem to be comma separated.".format(path))
-                            raise RunTimeError("Could not parse the samplesheet, does not seem to be comma separated")
+                            raise RuntimeError("Could not parse the samplesheet, does not seem to be comma separated")
 
                     elif flag == 'READS':
                         reads.append(line.split(',')[0])
