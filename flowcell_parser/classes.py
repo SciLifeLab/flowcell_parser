@@ -20,11 +20,10 @@ class RunParser(object):
     :SampleSheetParser samplesheet: see SampleSheetParser
     :LaneBarcodeParser lanebarcodes: see LaneBarcodeParser
     """
-    def __init__(self, path, configuration=None):
+    def __init__(self, path):
         if os.path.exists(path):
             self.log=logging.getLogger(__name__)
             self.path=path
-            self.config=configuration
             self.parse()
             self.create_db_obj()
         else:
@@ -73,16 +72,12 @@ class RunParser(object):
         except OSError as e:
             self.log.info(str(e))
             self.undet=None
+
         try:
             self.time_cycles = CycleTimesParser(cycle_times_log)
         except OSError as e:
             self.log.info(str(e))
             self.time_cycles = None
-        try:
-            self.demulti_tool={'Setup': {'Software': self.config['bcl2fastq']}}
-        except (KeyError, TypeError) as e:
-            self.log.info(str(e))
-            self.demulti_tool=None
 
 
     def create_db_obj(self):
@@ -100,8 +95,6 @@ class RunParser(object):
                 self.obj['run_setup']=self.runparameters.recipe
         if self.samplesheet:
             self.obj['samplesheet_csv']=self.samplesheet.data
-        if self.demulti_tool:
-            self.obj['DemultiplexConfig']=self.demulti_tool
         if self.lanebarcodes:
             self.obj['illumina']={}
             self.obj['illumina']['Demultiplex_Stats']={}
