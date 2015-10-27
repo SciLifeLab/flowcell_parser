@@ -12,7 +12,7 @@ def test_samplesheet():
 
 def test_runinfo():
     path = os.path.dirname(os.path.abspath(__file__))
-    k=classes.RunInfoParser(os.path.join(path, '../test_data/150424_ST-E00214_0031_BH2WY7CCXX/RunInfo.xml'))
+    k=classes.RunInfoParser(os.path.join(path, '../test_data/150424_ST-E00214_0031_BH2WY7CCXX/RunInfo.xml')
     assert(k.data is not None)
 
 def test_runparameters():
