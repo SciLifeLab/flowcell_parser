@@ -33,7 +33,9 @@ class RunParser(object):
 
     def parse(self, demultiplexingDir='Demultiplexing'):
         """Tries to parse as many files as possible from a run folder"""
-        fc_name=os.path.basename(os.path.abspath(self.path)).split('_')[-1][1:]
+        pattern = r'(\d{6})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
+        m       = re.match(pattern, os.path.basename(os.path.abspath(self.path)))
+        fc_name = m.group(4)
         rinfo_path=os.path.join(self.path, 'RunInfo.xml')
         rpar_path=os.path.join(self.path, 'runParameters.xml')
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
@@ -294,7 +296,7 @@ class SampleSheetParser(object):
                             header[line.split(',')[0]]=line.split(',')[1] 
                         except IndexError as e:
                             self.log.error("file {} does not seem to be comma separated.".format(path))
-                            raise RunTimeError("Could not parse the samplesheet, does not seem to be comma separated")
+                            raise RuntimeError("Could not parse the samplesheet, does not seem to be comma separated")
 
                     elif flag == 'READS':
                         reads.append(line.split(',')[0])
