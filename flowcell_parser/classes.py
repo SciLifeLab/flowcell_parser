@@ -146,7 +146,7 @@ class LaneBarcodeParser(object):
         self.sample_data=[]
         self.flowcell_data={}
         with open(self.path, 'rU') as htmlfile:
-            bsoup=BeautifulSoup(htmlfile)
+            bsoup=BeautifulSoup(htmlfile, 'html.parser')
             flowcell_table=bsoup.find_all('table')[1]
             lane_table=bsoup.find_all('table')[2]
 
