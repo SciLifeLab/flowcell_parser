@@ -109,7 +109,11 @@ class RunParser(object):
             self.obj['Undetermined']=self.undet.result
 
         if self.time_cycles:
-            self.obj['time cycles'] = self.time_cycles
+            time_cycles = []
+            for cycle in self.time_cycles.cycles:
+                for k,v in cycle.items():
+                    cycle[k] = str(v)
+            self.obj['time cycles'] = self.time_cycles.cycles
         
 
 
@@ -517,3 +521,5 @@ class CycleTimesParser(object):
         # the last records is not saved inside the loop
         if current_cycle not in self.cycles:
             self.cycles.append(current_cycle)
+
+
