@@ -299,7 +299,7 @@ class SampleSheetParser(object):
                 elif '[Data]' in line:
                     flag='data'
                 else:
-                    tokens=line.split[separator]
+                    tokens=line.split(separator)
                     if flag == 'HEADER':
                         if len(tokens) < 2:
                             self.log.error("file {} does not seem has a correct format.".format(path))
