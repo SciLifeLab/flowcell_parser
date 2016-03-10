@@ -283,9 +283,13 @@ class SampleSheetParser(object):
         csvlines=[]
         data=[]
         flag= 'data' #in case of HiSeq samplesheet only data section is present
-
+        separator=","
         with open(path, 'rU') as csvfile:
-            for line in csvfile.readlines():
+            # Ignore empty lines (for instance the Illumina Experiment Manager
+            # generates sample sheets with empty lines
+            lines = filter(None, (line.rstrip() for line in csvfile))
+            # Now parse the file
+            for line in lines:
                 if '[Header]' in line:
                     flag='HEADER'
                 elif '[Reads]' in line:
@@ -295,20 +299,19 @@ class SampleSheetParser(object):
                 elif '[Data]' in line:
                     flag='data'
                 else:
+                    tokens=line.split(separator)
                     if flag == 'HEADER':
-                        try:
-                            header[line.split(',')[0]]=line.split(',')[1] 
-                        except IndexError as e:
-                            self.log.error("file {} does not seem to be comma separated.".format(path))
-                            raise RuntimeError("Could not parse the samplesheet, does not seem to be comma separated")
-
+                        if len(tokens) < 2:
+                            self.log.error("file {} does not seem has a correct format.".format(path))
+                            raise RuntimeError("Could not parse the samplesheet, "
+                                               "the file does not seem to have a correct format.")
+                        header[tokens[0]]=tokens[1] 
                     elif flag == 'READS':
-                        reads.append(line.split(',')[0])
+                        reads.append(tokens[0])
                     elif flag == 'SETTINGS':
-                        settings.append(line.split(',')[0])
+                        settings.append(tokens[0])
                     elif flag == 'data':
                         csvlines.append(line)
-
             reader = csv.DictReader(csvlines)
             for row in reader:
                 linedict={}
