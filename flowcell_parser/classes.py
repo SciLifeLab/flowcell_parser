@@ -33,7 +33,9 @@ class RunParser(object):
 
     def parse(self, demultiplexingDir='Demultiplexing'):
         """Tries to parse as many files as possible from a run folder"""
-        fc_name=os.path.basename(os.path.abspath(self.path)).split('_')[-1][1:]
+        pattern = r'(\d{6})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
+        m       = re.match(pattern, os.path.basename(os.path.abspath(self.path)))
+        fc_name = m.group(4)
         rinfo_path=os.path.join(self.path, 'RunInfo.xml')
         rpar_path=os.path.join(self.path, 'runParameters.xml')
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
@@ -107,7 +109,11 @@ class RunParser(object):
             self.obj['Undetermined']=self.undet.result
 
         if self.time_cycles:
-            self.obj['time cycles'] = self.time_cycles
+            time_cycles = []
+            for cycle in self.time_cycles.cycles:
+                for k,v in cycle.items():
+                    cycle[k] = str(v)
+            self.obj['time cycles'] = self.time_cycles.cycles
         
 
 
@@ -156,7 +162,7 @@ class LaneBarcodeParser(object):
         self.sample_data=[]
         self.flowcell_data={}
         with open(self.path, 'rU') as htmlfile:
-            bsoup=BeautifulSoup(htmlfile)
+            bsoup=BeautifulSoup(htmlfile, 'html.parser')
             flowcell_table=bsoup.find_all('table')[1]
             lane_table=bsoup.find_all('table')[2]
 
@@ -277,9 +283,13 @@ class SampleSheetParser(object):
         csvlines=[]
         data=[]
         flag= 'data' #in case of HiSeq samplesheet only data section is present
-
+        separator=","
         with open(path, 'rU') as csvfile:
-            for line in csvfile.readlines():
+            # Ignore empty lines (for instance the Illumina Experiment Manager
+            # generates sample sheets with empty lines
+            lines = filter(None, (line.rstrip() for line in csvfile))
+            # Now parse the file
+            for line in lines:
                 if '[Header]' in line:
                     flag='HEADER'
                 elif '[Reads]' in line:
@@ -289,20 +299,19 @@ class SampleSheetParser(object):
                 elif '[Data]' in line:
                     flag='data'
                 else:
+                    tokens=line.split(separator)
                     if flag == 'HEADER':
-                        try:
-                            header[line.split(',')[0]]=line.split(',')[1] 
-                        except IndexError as e:
-                            self.log.error("file {} does not seem to be comma separated.".format(path))
-                            raise RunTimeError("Could not parse the samplesheet, does not seem to be comma separated")
-
+                        if len(tokens) < 2:
+                            self.log.error("file {} does not seem has a correct format.".format(path))
+                            raise RuntimeError("Could not parse the samplesheet, "
+                                               "the file does not seem to have a correct format.")
+                        header[tokens[0]]=tokens[1] 
                     elif flag == 'READS':
-                        reads.append(line.split(',')[0])
+                        reads.append(tokens[0])
                     elif flag == 'SETTINGS':
-                        settings.append(line.split(',')[0])
+                        settings.append(tokens[0])
                     elif flag == 'data':
                         csvlines.append(line)
-
             reader = csv.DictReader(csvlines)
             for row in reader:
                 linedict={}
@@ -515,3 +524,5 @@ class CycleTimesParser(object):
         # the last records is not saved inside the loop
         if current_cycle not in self.cycles:
             self.cycles.append(current_cycle)
+
+

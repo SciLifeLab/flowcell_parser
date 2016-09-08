@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from flowcell_parser import __version__
 import sys
 import os
 import glob
@@ -10,7 +11,7 @@ except IOError:
     install_requires = []
 
 setup(name = "flowcell_parser",
-    version = "1.0",
+    version = __version__,
     author = "Denis Moreno",
     author_email = "denis.moreno@scilifelab.se",
     description = "Fetches data from demultiplexed flowcells and pushes it into statusdb",
