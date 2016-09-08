@@ -324,9 +324,9 @@ class SampleSheetParser(object):
             self.header=header
             self.reads=reads
     
-    def _get_pattern_datafield(self, pat):
+    def _get_pattern_datafield(self, pattern):
         for fld in self.datafields:
-            if re.search(pat,fld,re.IGNORECASE):
+            if re.search(pattern,fld,re.IGNORECASE):
                 return fld
         return ''
 
