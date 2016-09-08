@@ -227,9 +227,6 @@ class SampleSheetParser(object):
             raise os.error(" sample sheet cannot be found at {0}".format(path))
 
 
-
-
-
     def generate_clean_samplesheet(self, fields_to_remove=None, rename_samples=True, rename_qPCR_suffix = False, fields_qPCR= None):
         """Will generate a 'clean' samplesheet, : the given fields will be removed. if rename_samples is True, samples prepended with 'Sample_'
         are renamed to match the sample name"""
@@ -272,7 +269,6 @@ class SampleSheetParser(object):
             output+=",".join(line_ar)
             output+=os.linesep
         return output
-
 
 
     def parse(self, path):
@@ -320,11 +316,19 @@ class SampleSheetParser(object):
                 data.append(linedict)
 
             self.datafields=reader.fieldnames
+            self.dfield_sid=self._get_pattern_datafield(r'sample_?id') 
+            self.dfield_snm=self._get_pattern_datafield(r'sample_?name')
+            self.dfield_proj=self._get_pattern_datafield(r'.*?project')
             self.data=data
             self.settings=settings
             self.header=header
             self.reads=reads
-
+    
+    def _get_pattern_datafield(self, pat):
+        for fld in self.datafields:
+            if re.search(pat,fld,re.IGNORECASE):
+                return fld
+        return ''
 
 class RunInfoParser(object):
     """Parses  RunInfo.xml.
