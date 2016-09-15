@@ -227,48 +227,7 @@ class SampleSheetParser(object):
             raise os.error(" sample sheet cannot be found at {0}".format(path))
 
 
-    def generate_clean_samplesheet(self, fields_to_remove=None, rename_samples=True, rename_qPCR_suffix = False, fields_qPCR= None):
-        """Will generate a 'clean' samplesheet, : the given fields will be removed. if rename_samples is True, samples prepended with 'Sample_'
-        are renamed to match the sample name"""
-        output=""
-        if not fields_to_remove:
-            fields_to_remove=[]
-        #Header
-        output+="[Header]{}".format(os.linesep)
-        for field in self.header:
-            output+="{},{}".format(field.rstrip(), self.header[field].rstrip())
-            output+=os.linesep
-        #Data
-        output+="[Data]{}".format(os.linesep)
-        datafields=[]
-        for field in self.datafields:
-            if field not in fields_to_remove:
-                datafields.append(field)
-        output+=",".join(datafields)
-        output+=os.linesep
-        for line in self.data:
-            line_ar=[]
-            for field in datafields:
-                value = line[field]
-                if rename_samples and 'SampleID' in field :
-                    try:
-                        if rename_qPCR_suffix and 'SampleName' in fields_qPCR:
-                            #substitute SampleID with SampleName, add Sample_ as prefix and remove __qPCR_ suffix
-                            value =re.sub('__qPCR_$', '', 'Sample_{}'.format(line['SampleName']))
-                        else:
-                            #substitute SampleID with SampleName, add Sample_ as prefix
-                            value ='Sample_{}'.format(line['SampleName'])
-                    except:
-                        #otherwise add Sample_ as prefix
-                        value = 'Sample_{}'.format(line['SampleID'])
-                elif rename_qPCR_suffix and field in fields_qPCR:
-                    value = re.sub('__qPCR_$', '', line[field])
 
-                line_ar.append(value)
-
-            output+=",".join(line_ar)
-            output+=os.linesep
-        return output
 
 
     def parse(self, path):
@@ -316,7 +275,7 @@ class SampleSheetParser(object):
                 data.append(linedict)
 
             self.datafields=reader.fieldnames
-            self.dfield_sid=self._get_pattern_datafield(r'sample_?id') 
+            self.dfield_sid=self._get_pattern_datafield(r'sample_?id')
             self.dfield_snm=self._get_pattern_datafield(r'sample_?name')
             self.dfield_proj=self._get_pattern_datafield(r'.*?project')
             self.data=data
