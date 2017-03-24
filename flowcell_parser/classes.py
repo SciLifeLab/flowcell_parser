@@ -1,10 +1,10 @@
-
 import re
 import os
 import csv
 import xml.etree.ElementTree as ET
 import logging
 import glob
+import json
 from datetime import datetime
 
 from collections import OrderedDict
@@ -39,12 +39,16 @@ class RunParser(object):
         rinfo_path=os.path.join(self.path, 'RunInfo.xml')
         rpar_path=os.path.join(self.path, 'runParameters.xml')
         ss_path=os.path.join(self.path, 'SampleSheet.csv')
+	cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
+
+	#These three are generate post-demultiplexing and could thus potentially be replaced by reading from stats.json
         lb_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
         ln_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
         undeterminedStatsFolder = os.path.join(self.path, demultiplexingDir,  "Stats")
-        cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
-
-        try:
+	
+	json_path = os.path.join(self.path, demultiplexingDir,  "Stats", "Stats.json")
+        
+	try:
             self.runinfo=RunInfoParser(rinfo_path)
         except OSError as e:
             self.log.info(str(e))
@@ -74,13 +78,16 @@ class RunParser(object):
         except OSError as e:
             self.log.info(str(e))
             self.undet=None
-
         try:
             self.time_cycles = CycleTimesParser(cycle_times_log)
         except OSError as e:
             self.log.info(str(e))
             self.time_cycles = None
-
+	try:
+            self.stats_json = json.load(json_path)
+        except OSError as e:
+            self.log.info(str(e))
+            self.stats_json = None
 
     def create_db_obj(self):
         self.obj={}
@@ -193,23 +200,6 @@ class LaneBarcodeParser(object):
                     self.sample_data.append(d)
 
 
-
-
-class DemultiplexingStatsParser(object):
-    def __init__(self, path ):
-        if os.path.exists(path):
-            self.path=path
-            self.parse()
-        else:
-            raise os.error(" DemultiplexingStats.xml cannot be found at {0}".format(path))
-
-    def parse(self):
-        data={}
-        tree=ET.parse(self.path)
-        root = tree.getroot()
-        self.data=xml_to_dict(root)
-
-
 class SampleSheetParser(object):
     """Parses  Samplesheets, with their fake csv format.
     Should be instancied with the samplesheet path as an argument.
@@ -225,9 +215,6 @@ class SampleSheetParser(object):
             self.parse(path)
         else:
             raise os.error(" sample sheet cannot be found at {0}".format(path))
-
-
-
 
 
     def parse(self, path):
