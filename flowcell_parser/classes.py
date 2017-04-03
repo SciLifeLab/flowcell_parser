@@ -44,8 +44,7 @@ class RunParser(object):
 	#These three are generate post-demultiplexing and could thus potentially be replaced by reading from stats.json
         lb_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
         ln_path=os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
-        undeterminedStatsFolder = os.path.join(self.path, demultiplexingDir,  "Stats")
-	
+        undeterminedStatsFolder = os.path.join(self.path, demultiplexingDir,  "Stats")	
 	json_path = os.path.join(self.path, demultiplexingDir,  "Stats", "Stats.json")
         
 	try:
@@ -84,7 +83,7 @@ class RunParser(object):
             self.log.info(str(e))
             self.time_cycles = None
 	try:
-            self.stats_json = json.load(json_path)
+            self.stats_json = StatsParser(json_path)
         except OSError as e:
             self.log.info(str(e))
             self.stats_json = None
@@ -342,7 +341,7 @@ class RunParametersParser(object):
         if os.path.exists(path):
             self.parse()
         else:
-            raise os.error(" run parameters cannot be found at {0}".format(path))
+            raise os.error("RunParameters file cannot be found at {0}".format(path))
         
     def parse(self):
         data={}
@@ -475,4 +474,17 @@ class CycleTimesParser(object):
         if current_cycle not in self.cycles:
             self.cycles.append(current_cycle)
 
+class StatsParser(object):
 
+    def __init__(self, path):
+        if os.path.exists(path):
+            self.path = path
+            self.cycles = []
+            self.parse()
+	    self.data = None
+        else:
+            raise os.error("file {0} cannot be found".format(path))
+
+    def parse(self):
+	with open(self.path) as data:
+            self.data=json.load(data)
