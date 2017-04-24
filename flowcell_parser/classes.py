@@ -83,10 +83,10 @@ class RunParser(object):
             self.log.info(str(e))
             self.time_cycles = None
 	try:
-            self.stats_json = StatsParser(json_path)
+            self.json_stats = StatsParser(json_path)
         except OSError as e:
             self.log.info(str(e))
-            self.stats_json = None
+            self.json_stats = None
 
     def create_db_obj(self):
         self.obj={}
@@ -110,17 +110,16 @@ class RunParser(object):
             self.obj['illumina']['Demultiplex_Stats']['Flowcell_stats']=self.lanebarcodes.flowcell_data
             if self.lanes:
                 self.obj['illumina']['Demultiplex_Stats']['Lanes_stats']=self.lanes.sample_data
-
         if self.undet:
             self.obj['Undetermined']=self.undet.result
-
         if self.time_cycles:
             time_cycles = []
             for cycle in self.time_cycles.cycles:
                 for k,v in cycle.items():
                     cycle[k] = str(v)
             self.obj['time cycles'] = self.time_cycles.cycles
-        
+        if self.json_stats:
+	    self.obj['Json_Stats'] = self.json_stats.data
 
 
 
@@ -480,8 +479,8 @@ class StatsParser(object):
         if os.path.exists(path):
             self.path = path
             self.cycles = []
-            self.parse()
 	    self.data = None
+            self.parse()
         else:
             raise os.error("file {0} cannot be found".format(path))
 
