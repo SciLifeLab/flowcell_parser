@@ -20,12 +20,6 @@ def test_runparameters():
     k=classes.RunParametersParser(os.path.join(path, '../test_data/150424_ST-E00214_0031_BH2WY7CCXX/runParameters.xml'))
     assert(k.data is not None)
     
-
-def test_demuxstats():
-    path = os.path.dirname(os.path.abspath(__file__))
-    k=classes.DemultiplexingStatsParser(os.path.join(path, '../test_data/150424_ST-E00214_0031_BH2WY7CCXX/DemultiplexingStats.xml'))
-    assert(k.data is not None)
-
 def test_laneBarcode():
     path = os.path.dirname(os.path.abspath(__file__))
     k=classes.LaneBarcodeParser(os.path.join(path, '../test_data/150424_ST-E00214_0031_BH2WY7CCXX/Demultiplexing/Reports/html/H2WY7CCXX/all/all/all/laneBarcode.html'))
