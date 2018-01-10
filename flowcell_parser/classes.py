@@ -305,7 +305,12 @@ class RunInfoParser(object):
         data['Number']=run.get('Number')
         data['Instrument']=run.find('Instrument').text
         data['Flowcell']=run.find('Flowcell').text
-        data['Date']=run.find('Date').text
+        #Change Novaseq date format from 10/17/2017 10:59:16 AM to 171017 (yymmdd) 
+        if len(run.find('Date').text) > 6:
+            mm,dd,yy = run.find('Date').text.split(" ")[0].split("/")
+            data['Date'] = "{}{}{}".format(yy[2:],mm,dd)
+        else:     
+            data['Date']=run.find('Date').text
         data['Reads']=[]
         for read in run.find('Reads').findall('Read'):
             data['Reads'].append(read.attrib)
