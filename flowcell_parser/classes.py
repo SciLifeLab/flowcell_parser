@@ -305,7 +305,11 @@ class RunInfoParser(object):
         data['Number']=run.get('Number')
         data['Instrument']=run.find('Instrument').text
         data['Flowcell']=run.find('Flowcell').text
-        data['Date']=run.find('Date').text
+        if len(run.find('Date').text) > 6:
+             mm,dd,yy = run.find('Date').text.split(" ")[0].split("/")
+             data['Date'] = "{}{}{}".format(yy,mm,dd)
+        else:     
+            data['Date']=run.find('Date').text
         data['Reads']=[]
         for read in run.find('Reads').findall('Read'):
             data['Reads'].append(read.attrib)
