@@ -3,6 +3,7 @@ from flowcell_parser import __version__
 import sys
 import os
 import glob
+from io import open
 
 try:
     with open("requirements.txt", "r") as f:

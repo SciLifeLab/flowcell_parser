@@ -5,6 +5,7 @@ import os
 import yaml
 import flowcell_parser.classes as cl
 import flowcell_parser.db as DB
+from io import open
 
 
 def setupLog(args):

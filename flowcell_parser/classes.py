@@ -9,6 +9,7 @@ from datetime import datetime
 
 from collections import OrderedDict
 from bs4 import BeautifulSoup #html parser
+from io import open
 
 
 class RunParser(object):
@@ -139,7 +140,7 @@ class DemuxSummaryParser(object):
             lane_nb = pattern.search(file).group(1)
             self.result[lane_nb] = OrderedDict()
             self.TOTAL[lane_nb] = 0
-            with open(file, 'rU') as f:
+            with open(file, newline='') as f:
                 undeterminePart = False
                 for line in f:
                     if not undeterminePart:
@@ -164,7 +165,7 @@ class LaneBarcodeParser(object):
     def parse(self):
         self.sample_data = []
         self.flowcell_data = {}
-        with open(self.path, 'rU') as htmlfile:
+        with open(self.path, newline='') as htmlfile:
             bsoup = BeautifulSoup(htmlfile, 'html.parser')
             flowcell_table = bsoup.find_all('table')[1]
             lane_table = bsoup.find_all('table')[2]
@@ -221,7 +222,7 @@ class SampleSheetParser(object):
         data = []
         flag = 'data' #in case of HiSeq samplesheet only data section is present
         separator = ","
-        with open(path, 'rU') as csvfile:
+        with open(path, newline='') as csvfile:
             # Ignore empty lines (for instance the Illumina Experiment Manager
             # generates sample sheets with empty lines
             lines = filter(None, (line.rstrip() for line in csvfile))
