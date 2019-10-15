@@ -384,7 +384,7 @@ def xml_to_dict(root):
                 if child.tag not in duplicates:
                     duplicates[child.tag] = []
                 lower = xml_to_dict(child)
-                duplicates[child.tag].extend(lower.values())
+                duplicates[child.tag].extend(list(lower.values()))
                 current.update(duplicates)
             else:
                 lower = xml_to_dict(child)

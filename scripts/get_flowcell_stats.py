@@ -6,6 +6,7 @@ import os
 import re
 import operator
 import flowcell_parser.classes as parser
+import six
 
 
 def flowcell_stats(flowcell):
@@ -29,7 +30,7 @@ def flowcell_stats(flowcell):
         FC_dict[lane][sample]["% >= Q30bases"] = element["% >= Q30bases"]
 
     lanes = []
-    for samples_lane in sorted(FC_dict.items(), key=operator.itemgetter(0)):
+    for samples_lane in sorted(list(FC_dict.items()), key=operator.itemgetter(0)):
         lane = { "lane": samples_lane[0],
                 "Reads": 0,
                 "Yield (Mbases)": 0,
@@ -38,7 +39,7 @@ def flowcell_stats(flowcell):
                 "Undetemined Reads": 0,
                 "% Undetermined Reads": 0}
         #in case of demultiplexing the Q30 bases is belonging to one of the samples
-        for sample_name, sample in samples_lane[1].iteritems():
+        for sample_name, sample in six.iteritems(samples_lane[1]):
             if sample_name == "unknown":
                 lane["Undetemined Reads"] += int( re.sub(',', '', sample["Reads"]))
             else:
