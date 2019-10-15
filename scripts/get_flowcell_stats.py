@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 import yaml
 import os
@@ -47,7 +48,7 @@ def flowcell_stats(flowcell):
         lane["% Undetermined Reads"] = (float(lane["Undetemined Reads"])/(lane["Reads"]+lane["Undetemined Reads"]))*100
         lanes.append(lane)
 
-    print "FC\tLane\tReads\tYield(Mbases)\tRawCoverage\t%>Q30bases\tUndeteminedReads\t%Undetermined"
+    print("FC\tLane\tReads\tYield(Mbases)\tRawCoverage\t%>Q30bases\tUndeteminedReads\t%Undetermined")
     for lane in lanes:
         import sys
         sys.stdout.write('{}\t'.format(FC_id))
