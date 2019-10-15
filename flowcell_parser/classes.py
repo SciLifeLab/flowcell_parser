@@ -242,7 +242,7 @@ class SampleSheetParser(object):
                             self.log.error("file {} does not seem has a correct format.".format(path))
                             raise RuntimeError("Could not parse the samplesheet, "
                                                "the file does not seem to have a correct format.")
-                        header[tokens[0]] = tokens[1] 
+                        header[tokens[0]] = tokens[1]
                     elif flag == 'READS':
                         reads.append(tokens[0])
                     elif flag == 'SETTINGS':

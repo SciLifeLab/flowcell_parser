@@ -1,4 +1,3 @@
-
 import flowcell_parser.classes as classes
 import os
 
