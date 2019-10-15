@@ -2,12 +2,12 @@ import couchdb
 import yaml
 import logging
 
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 def setupServer(conf):
     db_conf = conf['statusdb']
-    url="http://{0}:{1}@{2}:{3}".format(db_conf['username'], db_conf['password'], db_conf['url'], db_conf['port'])
+    url = "http://{0}:{1}@{2}:{3}".format(db_conf['username'], db_conf['password'], db_conf['url'], db_conf['port'])
     return couchdb.Server(url)
 
 def update_doc(db, obj, over_write_db_entry=False):
@@ -22,7 +22,7 @@ def update_doc(db, obj, over_write_db_entry=False):
             #if they are different, merge the old into the new
             if not over_write_db_entry:
                 #do not merge if over_write option is specified
-                obj=merge(obj, remote_doc)
+                obj = merge(obj, remote_doc)
             obj['_id'] = doc_id
             obj['_rev'] = doc_rev
             db[doc_id] = obj 
