@@ -225,7 +225,7 @@ class SampleSheetParser(object):
         with open(path, newline='') as csvfile:
             # Ignore empty lines (for instance the Illumina Experiment Manager
             # generates sample sheets with empty lines
-            lines = filter(None, (line.rstrip() for line in csvfile))
+            lines = [nonempty_line for nonempty_line in (line.rstrip() for line in csvfile) if nonempty_line]
             # Now parse the file
             for line in lines:
                 if '[Header]' in line:
