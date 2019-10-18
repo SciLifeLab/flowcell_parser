@@ -54,6 +54,20 @@ def test_laneBarcode():
     assert k.flowcell_data == expected_flowcell_data
     assert k.sample_data == expected_sample_data
 
+def test_lane():
+    path = os.path.dirname(os.path.abspath(__file__))
+    k = classes.LaneBarcodeParser(os.path.join(path, '../test_data/150424_ST-E00214_0031_BH2WY7CCXX/Demultiplexing/Reports/html/H2WY7CCXX/all/all/all/lane_thin.html'))
+    expected_sample_data = [{u'Yield (Mbases)': u'37.75',
+                             u'Lane': u'1',
+                             u'% One mismatchbarcode': u'63.70',
+                             u'% Perfectbarcode': u'119,426',
+                             u'#': u'95.00',
+                             u'Filtered data': u'100.00',
+                             u'Raw data': u'620,815,680',
+                             u'Clusters': u'88.69',
+                             u'% of thelane': u'395,451,350'}]
+    assert k.sample_data == expected_sample_data
+
 def test_parser():
     path = os.path.dirname(os.path.abspath(__file__))
     k = classes.RunParser(os.path.join(path, '../test_data/150424_ST-E00214_0031_BH2WY7CCXX'))
