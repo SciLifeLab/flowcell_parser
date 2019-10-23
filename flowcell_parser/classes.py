@@ -56,7 +56,7 @@ class RunParser(object):
             self.runparameters=RunParametersParser(rpar_path)
         except OSError as e:
             self.log.info(str(e))
-            self.runParameters=None
+            self.runparameters=None
         try:
             self.samplesheet=SampleSheetParser(ss_path)
         except OSError as e:
