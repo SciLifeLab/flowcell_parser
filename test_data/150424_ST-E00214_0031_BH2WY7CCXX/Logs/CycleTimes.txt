@@ -1,0 +1,13 @@
+Date    Time    Barcode Cycle   Info
+5/20/2019       15:03:22.011    H2KYVCCX2       1       Start chemistry
+5/20/2019       15:05:56.339    H2KYVCCX2       1       End chemistry
+5/20/2019       15:05:56.341    H2KYVCCX2       1       Start ResumeChemsitry
+5/20/2019       15:06:27.474    H2KYVCCX2       1       End ResumeChemsitry
+5/20/2019       15:06:27.479    H2KYVCCX2       1       Start Imaging
+5/20/2019       15:20:03.878    H2KYVCCX2       1       End Imaging
+5/20/2019       15:20:04.387    H2KYVCCX2       2       Start chemistry
+5/20/2019       15:24:00.562    H2KYVCCX2       2       End chemistry
+5/20/2019       15:32:24.317    H2KYVCCX2       2       Start ResumeChemsitry
+5/20/2019       15:32:56.422    H2KYVCCX2       2       End ResumeChemsitry
+5/20/2019       15:33:29.208    H2KYVCCX2       2       Start Imaging
+5/20/2019       15:42:14.893    H2KYVCCX2       2       End Imaging
