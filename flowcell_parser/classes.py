@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 from collections import OrderedDict
-from bs4 import BeautifulSoup #html parser
+from bs4 import BeautifulSoup  # html parser
 from io import open
 
 
@@ -30,8 +30,6 @@ class RunParser(object):
         else:
             raise os.error(" flowcell cannot be found at {0}".format(path))
 
-
-
     def parse(self, demultiplexingDir='Demultiplexing'):
         """Tries to parse as many files as possible from a run folder"""
         pattern = r'(\d{6})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
@@ -42,11 +40,29 @@ class RunParser(object):
         ss_path = os.path.join(self.path, 'SampleSheet.csv')
         cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
 
-        #These three are generate post-demultiplexing and could thus potentially be replaced by reading from stats.json
-        lb_path = os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'laneBarcode.html')
-        ln_path = os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name, 'all', 'all', 'all', 'lane.html')
-        undeterminedStatsFolder = os.path.join(self.path, demultiplexingDir, "Stats")
-        json_path = os.path.join(self.path, demultiplexingDir, "Stats", "Stats.json")
+        # These three are generate post-demultiplexing and could thus
+        # potentially be replaced by reading from stats.json
+        lb_path = os.path.join(self.path,
+                               demultiplexingDir,
+                               'Reports',
+                               'html',
+                               fc_name,
+                               'all', 'all', 'all',
+                               'laneBarcode.html')
+        ln_path = os.path.join(self.path,
+                               demultiplexingDir,
+                               'Reports',
+                               'html',
+                               fc_name,
+                               'all', 'all', 'all',
+                               'lane.html')
+        undeterminedStatsFolder = os.path.join(self.path,
+                                               demultiplexingDir,
+                                               "Stats")
+        json_path = os.path.join(self.path,
+                                 demultiplexingDir,
+                                 "Stats",
+                                 "Stats.json")
 
         try:
             self.runinfo = RunInfoParser(rinfo_path)
@@ -57,7 +73,7 @@ class RunParser(object):
             self.runparameters = RunParametersParser(rpar_path)
         except OSError as e:
             self.log.info(str(e))
-            self.runparameters=None
+            self.runparameters = None
         try:
             self.samplesheet = SampleSheetParser(ss_path)
         except OSError as e:
@@ -107,16 +123,18 @@ class RunParser(object):
         if self.lanebarcodes:
             self.obj['illumina'] = {}
             self.obj['illumina']['Demultiplex_Stats'] = {}
-            self.obj['illumina']['Demultiplex_Stats']['Barcode_lane_statistics'] = self.lanebarcodes.sample_data
-            self.obj['illumina']['Demultiplex_Stats']['Flowcell_stats'] = self.lanebarcodes.flowcell_data
+            self.obj['illumina']['Demultiplex_Stats']['Barcode_lane_statistics'] = \
+                self.lanebarcodes.sample_data
+            self.obj['illumina']['Demultiplex_Stats']['Flowcell_stats'] = \
+                self.lanebarcodes.flowcell_data
             if self.lanes:
-                self.obj['illumina']['Demultiplex_Stats']['Lanes_stats'] = self.lanes.sample_data
+                self.obj['illumina']['Demultiplex_Stats']['Lanes_stats'] = \
+                    self.lanes.sample_data
         if self.undet:
             self.obj['Undetermined'] = self.undet.result
         if self.time_cycles:
-            time_cycles = []
             for cycle in self.time_cycles.cycles:
-                for k,v in cycle.items():
+                for k, v in cycle.items():
                     cycle[k] = str(v)
             self.obj['time cycles'] = self.time_cycles.cycles
         if self.json_stats:
@@ -134,7 +152,7 @@ class DemuxSummaryParser(object):
             raise os.error("DemuxSummary folder {0} cannot be found".format(path))
 
     def parse(self):
-        #will only save the 50 more frequent indexes
+        # will only save the 50 more frequent indexes
         pattern = re.compile('DemuxSummaryF1L([0-9]).txt')
         for file in glob.glob(os.path.join(self.path, 'DemuxSummaryF1L?.txt')):
             lane_nb = pattern.search(file).group(1)
@@ -147,7 +165,7 @@ class DemuxSummaryParser(object):
                         if "### Columns:" in line:
                             undeterminePart = True
                     else:
-                        #it means I am readng the index_Sequence  Hit_Count
+                        # it means I am readng the index_Sequence  Hit_Count
                         components = line.rstrip().split('\t')
                         if len(self.result[lane_nb].keys()) < 50:
                             self.result[lane_nb][components[0]] = int(components[1])
@@ -155,7 +173,7 @@ class DemuxSummaryParser(object):
 
 
 class LaneBarcodeParser(object):
-    def __init__(self, path ):
+    def __init__(self, path):
         if os.path.exists(path):
             self.path = path
             self.parse()
@@ -183,16 +201,18 @@ class LaneBarcodeParser(object):
             rows = lane_table.find_all('tr')
             for row in rows[0:]:
                 if len(row.find_all('th')):
-                    #this is the header row
+                    # this is the header row
                     for th in row.find_all('th'):
-                        key = th.text.replace('<br/>', ' ').replace('&gt;', '>')
+                        key = th.text.replace(
+                            '<br/>', ' ').replace(
+                                '&gt;', '>')
                         keys.append(key)
                 elif len(row.find_all('td')):
                     values = []
                     for td in row.find_all('td'):
                         values.append(td.text)
 
-                    d = dict(zip(keys,values))
+                    d = dict(zip(keys, values))
                     self.sample_data.append(d)
 
 
@@ -203,15 +223,14 @@ class SampleSheetParser(object):
     .header : a dict containing the info located under the [Header] section
     .settings : a dict containing the data from the [Settings] section
     .reads : a list of the values in the [Reads] section
-    .data : a list of the values under the [Data] section. These values are stored in a dict format
+    .data : a list of the values under the [Data] section
     .datafields : a list of field names for the data section"""
-    def __init__(self, path ):
+    def __init__(self, path):
         self.log = logging.getLogger(__name__)
         if os.path.exists(path):
             self.parse(path)
         else:
             raise os.error(" sample sheet cannot be found at {0}".format(path))
-
 
     def parse(self, path):
         flag = None
@@ -220,12 +239,13 @@ class SampleSheetParser(object):
         settings = []
         csvlines = []
         data = []
-        flag = 'data' #in case of HiSeq samplesheet only data section is present
+        flag = 'data'  # in case of HiSeq samplesheet only data section is present
         separator = ","
         with open(path, newline='') as csvfile:
             # Ignore empty lines (for instance the Illumina Experiment Manager
             # generates sample sheets with empty lines
-            lines = [nonempty_line for nonempty_line in (line.rstrip() for line in csvfile) if nonempty_line]
+            lines = [nonempty_line for nonempty_line
+                     in (line.rstrip() for line in csvfile) if nonempty_line]
             # Now parse the file
             for line in lines:
                 if '[Header]' in line:
@@ -240,9 +260,11 @@ class SampleSheetParser(object):
                     tokens = line.split(separator)
                     if flag == 'HEADER':
                         if len(tokens) < 2:
-                            self.log.error("file {} does not seem has a correct format.".format(path))
-                            raise RuntimeError("Could not parse the samplesheet, "
-                                               "the file does not seem to have a correct format.")
+                            self.log.error("file {} does not have a",
+                                           "correct format.".format(path))
+                            raise RuntimeError("Could not parse the",
+                                               "samplesheet, the file does",
+                                               "not seem to have a correct format.")
                         header[tokens[0]] = tokens[1]
                     elif flag == 'READS':
                         reads.append(tokens[0])
@@ -268,9 +290,10 @@ class SampleSheetParser(object):
 
     def _get_pattern_datafield(self, pattern):
         for fld in self.datafields:
-            if re.search(pattern,fld,re.IGNORECASE):
+            if re.search(pattern, fld, re.IGNORECASE):
                 return fld
         return ''
+
 
 class RunInfoParser(object):
     """Parses  RunInfo.xml.
@@ -285,7 +308,7 @@ class RunInfoParser(object):
      -Reads metadata
      -Flowcell layout
     """
-    def __init__(self, path ):
+    def __init__(self, path):
         self.data = {}
         self.recipe = None
         self.path = path
@@ -303,9 +326,12 @@ class RunInfoParser(object):
         data['Number'] = run.get('Number')
         data['Instrument'] = run.find('Instrument').text
         data['Flowcell'] = run.find('Flowcell').text
-        #Change Novaseq date format from 10/17/2017 10:59:16 AM to 171017 (yymmdd)
+
+        # Change Novaseq date format from
+        # 10/17/2017 10:59:16 AM to 171017 (yymmdd)
         if len(run.find('Date').text) > 6:
-            data['Date'] = datetime.strptime(run.find('Date').text.split(" ")[0], "%m/%d/%Y").strftime("%y%m%d")
+            data['Date'] = datetime.strptime(run.find('Date').text.split(" ")[0],
+                                             "%m/%d/%Y").strftime("%y%m%d")
         else:
             data['Date'] = run.find('Date').text
         data['Reads'] = []
@@ -316,7 +342,6 @@ class RunInfoParser(object):
         self.data = data
         self.recipe = make_run_recipe(self.data.get('Reads', {}))
 
-
     def get_read_configuration(self):
         """return a list of dicts containig the Read Configuration
             """
@@ -325,16 +350,19 @@ class RunInfoParser(object):
             readConfig = self.data['Reads']
             return sorted(readConfig, key=lambda r: int(r.get("Number", 0)))
         except IOError:
-            raise RuntimeError('Reads section not present in RunInfo. Check the FC folder.')
+            raise RuntimeError('Reads section not present in RunInfo.',
+                               'Check the FC folder.')
+
 
 class RunParametersParser(object):
     """Parses a runParameters.xml file.
-       This is a much more general xml parser, it will build a dict from the xml data.
-       Attributes might be replaced if children nodes have the same tag as the attributes
-       This does not happen in the current xml file, but if you're planning to reuse this, it may be of interest.
+    This is a much more general xml parser, it will build a dict from the
+    xml data. Attributes might be replaced if children nodes have the same
+    tag as the attributes. This does not happen in the current xml file,
+    but if you're planning to reuse this, it may be of interest.
     """
 
-    def __init__(self, path ):
+    def __init__(self, path):
         self.data = {}
         self.recipe = None
         self.path = path
@@ -344,15 +372,18 @@ class RunParametersParser(object):
             raise os.error("RunParameters file cannot be found at {0}".format(path))
 
     def parse(self):
-        data = {}
         tree = ET.parse(self.path)
         root = tree.getroot()
         self.data = xml_to_dict(root)
-        self.recipe = make_run_recipe(self.data.get('Setup', {}).get('Reads', {}).get('Read', {}))
+        self.recipe = make_run_recipe(self.data.get(
+            'Setup', {}).get(
+                'Reads', {}).get(
+                    'Read', {}))
 
 
 def make_run_recipe(reads):
-    """Based on either runParameters of RunInfo, gathers the information as to how many
+    """Based on either runParameters of RunInfo,
+    gathers the information as to how many
     readings are done and their length, e.g. 2x150"""
     nb_reads = 0
     nb_indexed_reads = 0
@@ -394,7 +425,7 @@ def xml_to_dict(root):
             if [x in current for x in root.attrib]:
                 current.update(root.attrib)
             else:
-                current.update({'attribs':root.attribs})
+                current.update({'attribs': root.attribs})
         else:
             current = root.attrib
     if root.text and root.text.strip() != "":
@@ -402,11 +433,11 @@ def xml_to_dict(root):
             if 'text' not in current:
                 current['text'] = root.text
             else:
-                #you're really pushing here, pal
+                # you're really pushing here, pal
                 current['xml_text'] = root.text
         else:
             current = root.text
-    return {root.tag:current}
+    return {root.tag: current}
 
 
 class CycleTimesParser(object):
@@ -421,10 +452,11 @@ class CycleTimesParser(object):
     def parse(self):
         """
         parse CycleTimes.txt and return ordered list of cycles
-            CycleTimes.txt contains records: <date> <time> <barcode> <cycle> <info>
-            one cycle contains a few records (defined by <cycle>)
-            parser goes over records and saves the first record of each cycle as start time
-            and the last record of each cycle as end time
+        CycleTimes.txt contains records:
+        <date> <time> <barcode> <cycle> <info>
+        one cycle contains a few records (defined by <cycle>)
+        parser goes over records and saves the first record of each cycle as
+        start time and the last record of each cycle as end time
         """
         data = []
         date_format = '%m/%d/%Y-%H:%M:%S.%f'
@@ -440,12 +472,15 @@ class CycleTimesParser(object):
                 cycle_list = cycle_line.split()
                 cycle_time_obj = {}
                 # parse datetime
-                cycle_time_obj['datetime'] = datetime.strptime("{date}-{time}".format(date=cycle_list[0], time=cycle_list[1]), date_format)
+                cycle_time_obj['datetime'] = datetime.strptime(
+                    "{date}-{time}".format(
+                        date=cycle_list[0],
+                        time=cycle_list[1]),
+                    date_format)
                 # parse cycle number
                 cycle_time_obj['cycle'] = int(cycle_list[3])
                 # add object in the list
                 data.append(cycle_time_obj)
-
 
         # take the first record as current cycle
         current_cycle = {
@@ -473,6 +508,7 @@ class CycleTimesParser(object):
         if current_cycle not in self.cycles:
             self.cycles.append(current_cycle)
 
+
 class StatsParser(object):
 
     def __init__(self, path):
@@ -486,4 +522,4 @@ class StatsParser(object):
 
     def parse(self):
         with open(self.path) as data:
-            self.data=json.load(data)
+            self.data = json.load(data)
