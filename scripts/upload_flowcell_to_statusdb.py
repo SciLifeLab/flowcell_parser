@@ -5,6 +5,7 @@ import os
 import yaml
 import flowcell_parser.classes as cl
 import flowcell_parser.db as DB
+from io import open
 
 
 def setupLog(args):
@@ -22,11 +23,11 @@ def get_conf(conf_file):
 
 def main(args):
     log = setupLog(args)
-    conf=get_conf(args.conf)
+    conf = get_conf(args.conf)
     couch = DB.setupServer(conf)
-    db=couch['x_flowcells']
-    parser=cl.XTenParser(args.flowcell)
-    DB.update_doc(db,parser.obj)
+    db = couch['x_flowcells']
+    parser = cl.XTenParser(args.flowcell)
+    DB.update_doc(db, parser.obj)
 
 
 
@@ -34,25 +35,16 @@ if __name__=='__main__':
     usage = "Usage:       python upload_flowcell_to_statusdb.py [options]"
     parser = argparse.ArgumentParser(description=usage)
 
-    parser.add_argument("-f", "--flowcell", dest="flowcell", required=True,  
+    parser.add_argument("-f", "--flowcell", dest="flowcell", required=True,
     help = "path to the flowcell to upload")
 
-    parser.add_argument("-c", "--conf", dest="conf", 
-    default=os.path.join(os.environ['HOME'],'.taca/taca.yaml'), 
+    parser.add_argument("-c", "--conf", dest="conf",
+    default=os.path.join(os.environ['HOME'],'.taca/taca.yaml'),
     help = "Config file.  Default: ~/.taca/taca.yaml")
 
-    parser.add_argument("-l", "--log", dest="logfile", 
-    default=os.path.join(os.environ['HOME'],'flowcell_upload.log'), 
+    parser.add_argument("-l", "--log", dest="logfile",
+    default=os.path.join(os.environ['HOME'],'flowcell_upload.log'),
     help = "log file.  Default: ~/flowcell_upload.log")
     args = parser.parse_args()
 
     main(args)
-
-
-
-
-    
-
-
-
-

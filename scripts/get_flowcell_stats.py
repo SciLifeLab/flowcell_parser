@@ -1,9 +1,12 @@
+from __future__ import print_function
+from __future__ import division
 import argparse
 import yaml
 import os
 import re
 import operator
 import flowcell_parser.classes as parser
+import six
 
 
 def flowcell_stats(flowcell):
@@ -17,37 +20,37 @@ def flowcell_stats(flowcell):
         lane = element["Lane"]
         if  lane  not in FC_dict:
             FC_dict[lane] = {}
-        sample   = element["Sample"]
-        barcode  = element["Barcode sequence"]
+        sample = element["Sample"]
+        barcode = element["Barcode sequence"]
         if sample not in FC_dict[lane]:
-            FC_dict[lane][sample] = {}   
+            FC_dict[lane][sample] = {}
         #now populate the hash table
-        FC_dict[lane][sample]["Reads"]           = element["Clusters"]
-        FC_dict[lane][sample]["Yield (Mbases)"]  = element["Yield (Mbases)"]
-        FC_dict[lane][sample]["% >= Q30bases"]   = element["% >= Q30bases"]
-    
+        FC_dict[lane][sample]["Reads"] = element["Clusters"]
+        FC_dict[lane][sample]["Yield (Mbases)"] = element["Yield (Mbases)"]
+        FC_dict[lane][sample]["% >= Q30bases"] = element["% >= Q30bases"]
+
     lanes = []
-    for samples_lane in sorted(FC_dict.items(), key=operator.itemgetter(0)):
-        lane = { "lane": samples_lane[0], 
-                "Reads": 0 , 
-                "Yield (Mbases)": 0, 
-                "Raw Coverage":0 ,
-                "% >= Q30bases":0, 
-                "Undetemined Reads": 0, 
-                "% Undetermined Reads":0 }
+    for samples_lane in sorted(list(FC_dict.items()), key=operator.itemgetter(0)):
+        lane = { "lane": samples_lane[0],
+                "Reads": 0,
+                "Yield (Mbases)": 0,
+                "Raw Coverage": 0,
+                "% >= Q30bases": 0,
+                "Undetemined Reads": 0,
+                "% Undetermined Reads": 0}
         #in case of demultiplexing the Q30 bases is belonging to one of the samples
-        for sample_name, sample in samples_lane[1].iteritems():
-            if  sample_name == "unknown":
-                lane["Undetemined Reads"] += int( re.sub(',', '', sample["Reads"])) 
+        for sample_name, sample in six.iteritems(samples_lane[1]):
+            if sample_name == "unknown":
+                lane["Undetemined Reads"] += int( re.sub(',', '', sample["Reads"]))
             else:
-                lane["Reads"]           += int( re.sub(',', '', sample["Reads"])) 
-                lane["Yield (Mbases)"]  += int( re.sub(',', '', sample["Yield (Mbases)"])) 
-                lane["% >= Q30bases"]   = sample["% >= Q30bases"]
+                lane["Reads"] += int( re.sub(',', '', sample["Reads"]))
+                lane["Yield (Mbases)"] += int( re.sub(',', '', sample["Yield (Mbases)"]))
+                lane["% >= Q30bases"] = sample["% >= Q30bases"]
         lane["Raw Coverage"] = lane["Yield (Mbases)"]*1000000/3200000000
-        lane["% Undetermined Reads"]  = (float(lane["Undetemined Reads"])/(lane["Reads"]+lane["Undetemined Reads"]))*100
+        lane["% Undetermined Reads"] = (float(lane["Undetemined Reads"])/(lane["Reads"]+lane["Undetemined Reads"]))*100
         lanes.append(lane)
 
-    print "FC\tLane\tReads\tYield(Mbases)\tRawCoverage\t%>Q30bases\tUndeteminedReads\t%Undetermined"
+    print("FC\tLane\tReads\tYield(Mbases)\tRawCoverage\t%>Q30bases\tUndeteminedReads\t%Undetermined")
     for lane in lanes:
         import sys
         sys.stdout.write('{}\t'.format(FC_id))
@@ -58,8 +61,6 @@ def flowcell_stats(flowcell):
         sys.stdout.write('{}\t'.format(lane["% >= Q30bases"]))
         sys.stdout.write('{}\t'.format(lane["Undetemined Reads"]))
         sys.stdout.write('{}\n'.format(lane["% Undetermined Reads"]))
-
-
 
 
 def main():

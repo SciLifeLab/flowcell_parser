@@ -2,12 +2,13 @@ language: python
 
 python:
     - "2.7"
+    - "3.6"
 
 install:
     - python setup.py install
 
 script:
-    - cd tests && nosetests -v -s
+    - cd tests && pytest -v
 
 notifications:
     email: false
