@@ -334,7 +334,7 @@ class RunInfoParser(object):
                 data['Date'] = datetime.strptime(run.find('Date').text.split(" ")[0],
                                              "%m/%d/%Y").strftime("%y%m%d")
             except ValueError:
-                data['Date'] = datetime.strptime(run.find('Date').text, "%Y-%m-%dT%H:%M:%SZ").strftime("%Y%m%d")
+                data['Date'] = datetime.strptime(run.find('Date').text, "%Y-%m-%dT%H:%M:%SZ").strftime("%y%m%d")
         else:
             data['Date'] = run.find('Date').text
         data['Reads'] = []
