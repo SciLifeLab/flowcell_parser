@@ -330,8 +330,11 @@ class RunInfoParser(object):
         # Change Novaseq date format from
         # 10/17/2017 10:59:16 AM to 171017 (yymmdd)
         if len(run.find('Date').text) > 6:
-            data['Date'] = datetime.strptime(run.find('Date').text.split(" ")[0],
+            try:
+                data['Date'] = datetime.strptime(run.find('Date').text.split(" ")[0],
                                              "%m/%d/%Y").strftime("%y%m%d")
+            except ValueError:
+                data['Date'] = datetime.strptime(run.find('Date').text, "%Y-%m-%dT%H:%M:%SZ").strftime("%y%m%d")
         else:
             data['Date'] = run.find('Date').text
         data['Reads'] = []
