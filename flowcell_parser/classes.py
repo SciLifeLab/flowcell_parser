@@ -34,8 +34,12 @@ class RunParser(object):
         """Tries to parse as many files as possible from a run folder"""
         pattern = r'(\d{6})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
         m = re.match(pattern, os.path.basename(os.path.abspath(self.path)))
-        position = m.group(3)
-        fc_name = m.group(4)
+        instrument = m.group(2)
+        # NextSeq2000 has a different FC ID pattern that ID contains the first position letter
+        if "VH" in instrument:
+            fc_name = m.group(3) + m.group(4)
+        else:
+            fc_name = m.group(4)
         rinfo_path = os.path.join(self.path, 'RunInfo.xml')
         rpar_path = os.path.join(self.path, 'runParameters.xml')
         ss_path = os.path.join(self.path, 'SampleSheet.csv')
@@ -43,11 +47,6 @@ class RunParser(object):
 
         # These three are generate post-demultiplexing and could thus
         # potentially be replaced by reading from stats.json
-
-        # NextSeq2000 has a different FC ID pattern that ID contains the first position letter
-        if not os.path.exists(os.path.join(self.path, demultiplexingDir, 'Reports', 'html', fc_name)):
-            fc_name = position + fc_name
-                                           
         lb_path = os.path.join(self.path,
                                demultiplexingDir,
                                'Reports',
