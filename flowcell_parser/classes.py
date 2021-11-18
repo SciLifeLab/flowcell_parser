@@ -215,7 +215,7 @@ class LaneBarcodeParser(object):
                 elif len(row.find_all('td')):
                     values = []
                     for td in row.find_all('td'):
-                        values.append(td.text)
+                        values.append(td.text.replace('NaN', '0') if td.text else '0')
 
                     d = dict(zip(keys, values))
                     self.sample_data.append(d)
