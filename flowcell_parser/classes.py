@@ -40,9 +40,13 @@ class RunParser(object):
             fc_name = m.group(3) + m.group(4)
         else:
             fc_name = m.group(4)
+        # For MiSeq we parse the samplesheet "run_folder/SampleSheet_copy.csv"
+        if "M0" in instrument:
+            ss_path = os.path.join(self.path, 'SampleSheet_copy.csv')
+        else:
+            ss_path = os.path.join(self.path, 'SampleSheet.csv')
         rinfo_path = os.path.join(self.path, 'RunInfo.xml')
         rpar_path = os.path.join(self.path, 'runParameters.xml')
-        ss_path = os.path.join(self.path, 'SampleSheet.csv')
         cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
 
         # These three are generate post-demultiplexing and could thus
