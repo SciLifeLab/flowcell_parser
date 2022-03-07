@@ -1,5 +1,8 @@
 # Flowcell Parser Version Log
 
+## 20220307.1
+Change samplesheet path for MiSeq
+
 ## 20211118.1
 Fix issue with empty value with LaneBarcodeParser
 
