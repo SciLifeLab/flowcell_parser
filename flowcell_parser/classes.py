@@ -260,13 +260,13 @@ class SampleSheetParser(object):
                     flag = 'HEADER'
                 elif '[Reads]' in line:
                     flag = 'READS'
-                elif '[Settings]' or '[Sequencing_Settings]' in line: #[Sequencing_Settings] in NovaSeqXPlus
+                elif '[Settings]' in line:
                     flag = 'SETTINGS'
-                elif '[Data]' in line:  #TODO: For BCLConvert this is [BCLConvert_Data]
+                elif '[Data]' in line:
                     flag = 'data'
                 else:
                     tokens = line.split(separator)
-                    if flag == 'HEADER': #TODO: this case will never happen since flag is set to 'data'?
+                    if flag == 'HEADER':
                         if len(tokens) < 2:
                             self.log.error("file {} does not have a",
                                            "correct format.".format(path))
@@ -279,7 +279,7 @@ class SampleSheetParser(object):
                     elif flag == 'SETTINGS':
                         settings.append(tokens[0])
                     elif flag == 'data':
-                        csvlines.append(line) #TODO: check that this gets populated as expected
+                        csvlines.append(line)
             reader = csv.DictReader(csvlines)
             for row in reader:
                 linedict = {}
