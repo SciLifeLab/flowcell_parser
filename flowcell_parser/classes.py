@@ -32,8 +32,10 @@ class RunParser(object):
 
     def parse(self, demultiplexingDir='Demultiplexing'):
         """Tries to parse as many files as possible from a run folder"""
-        pattern = r'(\d{6})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
-        m = re.match(pattern, os.path.basename(os.path.abspath(self.path)))
+        pattern = r'(\d{6,8})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
+        run_abspath = os.path.abspath(self.path)
+        run_dir = os.path.basename(run_abspath)
+        m = re.match(pattern, run_dir)
         instrument = m.group(2)
         # NextSeq2000 has a different FC ID pattern that ID contains the first position letter
         if "VH" in instrument:
@@ -46,7 +48,12 @@ class RunParser(object):
         else:
             ss_path = os.path.join(self.path, 'SampleSheet.csv')
         rinfo_path = os.path.join(self.path, 'RunInfo.xml')
-        rpar_path = os.path.join(self.path, 'runParameters.xml')
+
+        if os.path.exists(os.path.join(run_abspath, "runParameters.xml")):
+            rpar_path = os.path.join(self.path, 'runParameters.xml')
+        elif os.path.exists(os.path.join(run_abspath, "RunParameters.xml")):
+            rpar_path = os.path.join(self.path, 'RunParameters.xml')
+            
         cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
 
         # These three are generate post-demultiplexing and could thus
@@ -305,7 +312,7 @@ class SampleSheetParser(object):
 
 
 class RunInfoParser(object):
-    """Parses  RunInfo.xml.
+    """Parses RunInfo.xml.
     Should be instancied with the file path as an argument.
 
     .data : a list of hand-picked values :
