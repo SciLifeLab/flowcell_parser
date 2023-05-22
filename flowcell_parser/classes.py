@@ -46,8 +46,8 @@ class RunParser(object):
         else:
             samplesheet_path = os.path.join(self.path, 'SampleSheet.csv')
         run_info_path = os.path.join(self.path, 'RunInfo.xml')
-        run_parameters_path = os.path.join(self.path, 'runParameters.xml') #TODO: RunParameters.xml for novaseqx
-        cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt") #TODO: missing for novaseqx and novaseq
+        run_parameters_path = os.path.join(self.path, 'runParameters.xml')
+        cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
 
         # These three are generated post-demultiplexing and could thus
         # potentially be replaced by reading from stats.json
