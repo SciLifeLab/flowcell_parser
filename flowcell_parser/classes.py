@@ -189,7 +189,7 @@ class LaneBarcodeParser(object):
         else:
             raise os.error("LaneBarcode.html cannot be found at {0}".format(path))
 
-    def parse(self): #TODO: check that this works the same for novaseqxplus
+    def parse(self):
         self.sample_data = []
         self.flowcell_data = {}
         with open(self.path, newline='') as htmlfile:
@@ -197,31 +197,31 @@ class LaneBarcodeParser(object):
             flowcell_table = bsoup.find_all('table')[1]
             lane_table = bsoup.find_all('table')[2]
 
-            keys = []
-            values = []
+            flowcell_keys = []
+            flowcell_values = []
             for th in flowcell_table.find_all('th'):
-                keys.append(th.text)
+                flowcell_keys.append(th.text)
             for td in flowcell_table.find_all('td'):
-                values.append(td.text)
+                flowcell_values.append(td.text)
 
-            self.flowcell_data = dict(zip(keys, values))
+            self.flowcell_data = dict(zip(flowcell_keys, flowcell_values))
 
-            keys = []
-            rows = lane_table.find_all('tr')
-            for row in rows[0:]:
+            lane_keys = []
+            lane_rows = lane_table.find_all('tr')
+            for row in lane_rows[0:]:
                 if len(row.find_all('th')):
                     # this is the header row
                     for th in row.find_all('th'):
                         key = th.text.replace(
                             '<br/>', ' ').replace(
                                 '&gt;', '>')
-                        keys.append(key)
+                        lane_keys.append(key)
                 elif len(row.find_all('td')):
-                    values = []
+                    lane_values = []
                     for td in row.find_all('td'):
-                        values.append(td.text.replace('NaN', '0') if td.text else '0')
+                        lane_values.append(td.text.replace('NaN', '0') if td.text else '0')
 
-                    d = dict(zip(keys, values))
+                    d = dict(zip(lane_keys, lane_values))
                     self.sample_data.append(d)
 
 
