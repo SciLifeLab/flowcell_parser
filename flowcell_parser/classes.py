@@ -21,6 +21,7 @@ class RunParser(object):
     :SampleSheetParser samplesheet: see SampleSheetParser
     :LaneBarcodeParser lanebarcodes: see LaneBarcodeParser
     """
+
     def __init__(self, path):
         if os.path.exists(path):
             self.log = logging.getLogger(__name__)
@@ -30,9 +31,9 @@ class RunParser(object):
         else:
             raise os.error(" flowcell cannot be found at {0}".format(path))
 
-    def parse(self, demultiplexingDir='Demultiplexing'):
+    def parse(self, demultiplexingDir="Demultiplexing"):
         """Tries to parse as many files as possible from a run folder"""
-        pattern = r'(\d{6,8})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
+        pattern = r"(\d{6,8})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)"
         run_abspath = os.path.abspath(self.path)
         run_dir = os.path.basename(run_abspath)
         m = re.match(pattern, run_dir)
@@ -44,41 +45,44 @@ class RunParser(object):
             fc_name = m.group(4)
         # For MiSeq we parse the samplesheet "run_folder/SampleSheet_copy.csv"
         if "M0" in instrument:
-            ss_path = os.path.join(self.path, 'SampleSheet_copy.csv')
+            ss_path = os.path.join(self.path, "SampleSheet_copy.csv")
         else:
-            ss_path = os.path.join(self.path, 'SampleSheet.csv')
-        rinfo_path = os.path.join(self.path, 'RunInfo.xml')
+            ss_path = os.path.join(self.path, "SampleSheet.csv")
+        rinfo_path = os.path.join(self.path, "RunInfo.xml")
 
         if os.path.exists(os.path.join(run_abspath, "runParameters.xml")):
-            rpar_path = os.path.join(self.path, 'runParameters.xml')
+            rpar_path = os.path.join(self.path, "runParameters.xml")
         elif os.path.exists(os.path.join(run_abspath, "RunParameters.xml")):
-            rpar_path = os.path.join(self.path, 'RunParameters.xml')
-            
-        cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
+            rpar_path = os.path.join(self.path, "RunParameters.xml")
+
+        cycle_times_log = os.path.join(self.path, "Logs", "CycleTimes.txt")
 
         # These three are generate post-demultiplexing and could thus
         # potentially be replaced by reading from stats.json
-        lb_path = os.path.join(self.path,
-                               demultiplexingDir,
-                               'Reports',
-                               'html',
-                               fc_name,
-                               'all', 'all', 'all',
-                               'laneBarcode.html')
-        ln_path = os.path.join(self.path,
-                               demultiplexingDir,
-                               'Reports',
-                               'html',
-                               fc_name,
-                               'all', 'all', 'all',
-                               'lane.html')
-        undeterminedStatsFolder = os.path.join(self.path,
-                                               demultiplexingDir,
-                                               "Stats")
-        json_path = os.path.join(self.path,
-                                 demultiplexingDir,
-                                 "Stats",
-                                 "Stats.json")
+        lb_path = os.path.join(
+            self.path,
+            demultiplexingDir,
+            "Reports",
+            "html",
+            fc_name,
+            "all",
+            "all",
+            "all",
+            "laneBarcode.html",
+        )
+        ln_path = os.path.join(
+            self.path,
+            demultiplexingDir,
+            "Reports",
+            "html",
+            fc_name,
+            "all",
+            "all",
+            "all",
+            "lane.html",
+        )
+        undeterminedStatsFolder = os.path.join(self.path, demultiplexingDir, "Stats")
+        json_path = os.path.join(self.path, demultiplexingDir, "Stats", "Stats.json")
 
         try:
             self.runinfo = RunInfoParser(rinfo_path)
@@ -123,38 +127,41 @@ class RunParser(object):
 
     def create_db_obj(self):
         self.obj = {}
-        bits = os.path.basename(os.path.abspath(self.path)).split('_')
+        bits = os.path.basename(os.path.abspath(self.path)).split("_")
         name = "{0}_{1}".format(bits[0], bits[-1])
-        self.obj['name'] = name
+        self.obj["name"] = name
         if self.runinfo:
-            self.obj['RunInfo'] = self.runinfo.data
+            self.obj["RunInfo"] = self.runinfo.data
             if self.runinfo.recipe:
-                self.obj['run_setup'] = self.runinfo.recipe
+                self.obj["run_setup"] = self.runinfo.recipe
         if self.runparameters:
             self.obj.update(self.runparameters.data)
             if self.runparameters.recipe:
-                self.obj['run_setup'] = self.runparameters.recipe
+                self.obj["run_setup"] = self.runparameters.recipe
         if self.samplesheet:
-            self.obj['samplesheet_csv'] = self.samplesheet.data
+            self.obj["samplesheet_csv"] = self.samplesheet.data
         if self.lanebarcodes:
-            self.obj['illumina'] = {}
-            self.obj['illumina']['Demultiplex_Stats'] = {}
-            self.obj['illumina']['Demultiplex_Stats']['Barcode_lane_statistics'] = \
-                self.lanebarcodes.sample_data
-            self.obj['illumina']['Demultiplex_Stats']['Flowcell_stats'] = \
-                self.lanebarcodes.flowcell_data
+            self.obj["illumina"] = {}
+            self.obj["illumina"]["Demultiplex_Stats"] = {}
+            self.obj["illumina"]["Demultiplex_Stats"][
+                "Barcode_lane_statistics"
+            ] = self.lanebarcodes.sample_data
+            self.obj["illumina"]["Demultiplex_Stats"][
+                "Flowcell_stats"
+            ] = self.lanebarcodes.flowcell_data
             if self.lanes:
-                self.obj['illumina']['Demultiplex_Stats']['Lanes_stats'] = \
-                    self.lanes.sample_data
+                self.obj["illumina"]["Demultiplex_Stats"][
+                    "Lanes_stats"
+                ] = self.lanes.sample_data
         if self.undet:
-            self.obj['Undetermined'] = self.undet.result
+            self.obj["Undetermined"] = self.undet.result
         if self.time_cycles:
             for cycle in self.time_cycles.cycles:
                 for k, v in cycle.items():
                     cycle[k] = str(v)
-            self.obj['time cycles'] = self.time_cycles.cycles
+            self.obj["time cycles"] = self.time_cycles.cycles
         if self.json_stats:
-            self.obj['Json_Stats'] = self.json_stats.data
+            self.obj["Json_Stats"] = self.json_stats.data
 
 
 class DemuxSummaryParser(object):
@@ -169,12 +176,12 @@ class DemuxSummaryParser(object):
 
     def parse(self):
         # will only save the 50 more frequent indexes
-        pattern = re.compile('DemuxSummaryF1L([0-9]).txt')
-        for file in glob.glob(os.path.join(self.path, 'DemuxSummaryF1L?.txt')):
+        pattern = re.compile("DemuxSummaryF1L([0-9]).txt")
+        for file in glob.glob(os.path.join(self.path, "DemuxSummaryF1L?.txt")):
             lane_nb = pattern.search(file).group(1)
             self.result[lane_nb] = OrderedDict()
             self.TOTAL[lane_nb] = 0
-            with open(file, newline='') as f:
+            with open(file, newline="") as f:
                 undeterminePart = False
                 for line in f:
                     if not undeterminePart:
@@ -182,7 +189,7 @@ class DemuxSummaryParser(object):
                             undeterminePart = True
                     else:
                         # it means I am readng the index_Sequence  Hit_Count
-                        components = line.rstrip().split('\t')
+                        components = line.rstrip().split("\t")
                         if len(self.result[lane_nb].keys()) < 50:
                             self.result[lane_nb][components[0]] = int(components[1])
                         self.TOTAL[lane_nb] += int(components[1])
@@ -199,34 +206,32 @@ class LaneBarcodeParser(object):
     def parse(self):
         self.sample_data = []
         self.flowcell_data = {}
-        with open(self.path, newline='') as htmlfile:
-            bsoup = BeautifulSoup(htmlfile, 'html.parser')
-            flowcell_table = bsoup.find_all('table')[1]
-            lane_table = bsoup.find_all('table')[2]
+        with open(self.path, newline="") as htmlfile:
+            bsoup = BeautifulSoup(htmlfile, "html.parser")
+            flowcell_table = bsoup.find_all("table")[1]
+            lane_table = bsoup.find_all("table")[2]
 
             keys = []
             values = []
-            for th in flowcell_table.find_all('th'):
+            for th in flowcell_table.find_all("th"):
                 keys.append(th.text)
-            for td in flowcell_table.find_all('td'):
+            for td in flowcell_table.find_all("td"):
                 values.append(td.text)
 
             self.flowcell_data = dict(zip(keys, values))
 
             keys = []
-            rows = lane_table.find_all('tr')
+            rows = lane_table.find_all("tr")
             for row in rows[0:]:
-                if len(row.find_all('th')):
+                if len(row.find_all("th")):
                     # this is the header row
-                    for th in row.find_all('th'):
-                        key = th.text.replace(
-                            '<br/>', ' ').replace(
-                                '&gt;', '>')
+                    for th in row.find_all("th"):
+                        key = th.text.replace("<br/>", " ").replace("&gt;", ">")
                         keys.append(key)
-                elif len(row.find_all('td')):
+                elif len(row.find_all("td")):
                     values = []
-                    for td in row.find_all('td'):
-                        values.append(td.text.replace('NaN', '0') if td.text else '0')
+                    for td in row.find_all("td"):
+                        values.append(td.text.replace("NaN", "0") if td.text else "0")
 
                     d = dict(zip(keys, values))
                     self.sample_data.append(d)
@@ -241,6 +246,7 @@ class SampleSheetParser(object):
     .reads : a list of the values in the [Reads] section
     .data : a list of the values under the [Data] section
     .datafields : a list of field names for the data section"""
+
     def __init__(self, path):
         self.log = logging.getLogger(__name__)
         if os.path.exists(path):
@@ -255,38 +261,45 @@ class SampleSheetParser(object):
         settings = []
         csvlines = []
         data = []
-        flag = 'data'  # in case of HiSeq samplesheet only data section is present
+        flag = "data"  # in case of HiSeq samplesheet only data section is present
         separator = ","
-        with open(path, newline='') as csvfile:
+        with open(path, newline="") as csvfile:
             # Ignore empty lines (for instance the Illumina Experiment Manager
             # generates sample sheets with empty lines
-            lines = [nonempty_line for nonempty_line
-                     in (line.rstrip() for line in csvfile) if nonempty_line]
+            lines = [
+                nonempty_line
+                for nonempty_line in (line.rstrip() for line in csvfile)
+                if nonempty_line
+            ]
             # Now parse the file
             for line in lines:
-                if '[Header]' in line:
-                    flag = 'HEADER'
-                elif '[Reads]' in line:
-                    flag = 'READS'
-                elif '[Settings]' in line:
-                    flag = 'SETTINGS'
-                elif '[Data]' in line:
-                    flag = 'data'
+                if "[Header]" in line:
+                    flag = "HEADER"
+                elif "[Reads]" in line:
+                    flag = "READS"
+                elif "[Settings]" in line:
+                    flag = "SETTINGS"
+                elif "[Data]" in line:
+                    flag = "data"
                 else:
                     tokens = line.split(separator)
-                    if flag == 'HEADER':
+                    if flag == "HEADER":
                         if len(tokens) < 2:
-                            self.log.error("file {} does not have a",
-                                           "correct format.".format(path))
-                            raise RuntimeError("Could not parse the",
-                                               "samplesheet, the file does",
-                                               "not seem to have a correct format.")
+                            self.log.error(
+                                "file {} does not have a",
+                                "correct format.".format(path),
+                            )
+                            raise RuntimeError(
+                                "Could not parse the",
+                                "samplesheet, the file does",
+                                "not seem to have a correct format.",
+                            )
                         header[tokens[0]] = tokens[1]
-                    elif flag == 'READS':
+                    elif flag == "READS":
                         reads.append(tokens[0])
-                    elif flag == 'SETTINGS':
+                    elif flag == "SETTINGS":
                         settings.append(tokens[0])
-                    elif flag == 'data':
+                    elif flag == "data":
                         csvlines.append(line)
             reader = csv.DictReader(csvlines)
             for row in reader:
@@ -296,9 +309,9 @@ class SampleSheetParser(object):
                 data.append(linedict)
 
             self.datafields = reader.fieldnames
-            self.dfield_sid = self._get_pattern_datafield(r'sample_?id')
-            self.dfield_snm = self._get_pattern_datafield(r'sample_?name')
-            self.dfield_proj = self._get_pattern_datafield(r'.*?project')
+            self.dfield_sid = self._get_pattern_datafield(r"sample_?id")
+            self.dfield_snm = self._get_pattern_datafield(r"sample_?name")
+            self.dfield_proj = self._get_pattern_datafield(r".*?project")
             self.data = data
             self.settings = settings
             self.header = header
@@ -308,7 +321,7 @@ class SampleSheetParser(object):
         for fld in self.datafields:
             if re.search(pattern, fld, re.IGNORECASE):
                 return fld
-        return ''
+        return ""
 
 
 class RunInfoParser(object):
@@ -324,6 +337,7 @@ class RunInfoParser(object):
      -Reads metadata
      -Flowcell layout
     """
+
     def __init__(self, path):
         self.data = {}
         self.recipe = None
@@ -337,40 +351,43 @@ class RunInfoParser(object):
         data = {}
         tree = ET.parse(self.path)
         root = tree.getroot()
-        run = root.find('Run')
-        data['Id'] = run.get('Id')
-        data['Number'] = run.get('Number')
-        data['Instrument'] = run.find('Instrument').text
-        data['Flowcell'] = run.find('Flowcell').text
+        run = root.find("Run")
+        data["Id"] = run.get("Id")
+        data["Number"] = run.get("Number")
+        data["Instrument"] = run.find("Instrument").text
+        data["Flowcell"] = run.find("Flowcell").text
 
         # Change Novaseq date format from
         # 10/17/2017 10:59:16 AM to 171017 (yymmdd)
-        if len(run.find('Date').text) > 6:
+        if len(run.find("Date").text) > 6:
             try:
-                data['Date'] = datetime.strptime(run.find('Date').text.split(" ")[0],
-                                             "%m/%d/%Y").strftime("%y%m%d")
+                data["Date"] = datetime.strptime(
+                    run.find("Date").text.split(" ")[0], "%m/%d/%Y"
+                ).strftime("%y%m%d")
             except ValueError:
-                data['Date'] = datetime.strptime(run.find('Date').text, "%Y-%m-%dT%H:%M:%SZ").strftime("%y%m%d")
+                data["Date"] = datetime.strptime(
+                    run.find("Date").text, "%Y-%m-%dT%H:%M:%SZ"
+                ).strftime("%y%m%d")
         else:
-            data['Date'] = run.find('Date').text
-        data['Reads'] = []
-        for read in run.find('Reads').findall('Read'):
-            data['Reads'].append(read.attrib)
-        layout = run.find('FlowcellLayout')
-        data['FlowcellLayout'] = layout.attrib
+            data["Date"] = run.find("Date").text
+        data["Reads"] = []
+        for read in run.find("Reads").findall("Read"):
+            data["Reads"].append(read.attrib)
+        layout = run.find("FlowcellLayout")
+        data["FlowcellLayout"] = layout.attrib
         self.data = data
-        self.recipe = make_run_recipe(self.data.get('Reads', {}))
+        self.recipe = make_run_recipe(self.data.get("Reads", {}))
 
     def get_read_configuration(self):
-        """return a list of dicts containig the Read Configuration
-            """
+        """return a list of dicts containig the Read Configuration"""
         readConfig = []
         try:
-            readConfig = self.data['Reads']
+            readConfig = self.data["Reads"]
             return sorted(readConfig, key=lambda r: int(r.get("Number", 0)))
         except IOError:
-            raise RuntimeError('Reads section not present in RunInfo.',
-                               'Check the FC folder.')
+            raise RuntimeError(
+                "Reads section not present in RunInfo.", "Check the FC folder."
+            )
 
 
 class RunParametersParser(object):
@@ -394,10 +411,9 @@ class RunParametersParser(object):
         tree = ET.parse(self.path)
         root = tree.getroot()
         self.data = xml_to_dict(root)
-        self.recipe = make_run_recipe(self.data.get(
-            'Setup', {}).get(
-                'Reads', {}).get(
-                    'Read', {}))
+        self.recipe = make_run_recipe(
+            self.data.get("Setup", {}).get("Reads", {}).get("Read", {})
+        )
 
 
 def make_run_recipe(reads):
@@ -409,16 +425,16 @@ def make_run_recipe(reads):
     numCycles = 0
     for read in reads:
         nb_reads += 1
-        if read['IsIndexedRead'] == 'Y':
+        if read["IsIndexedRead"] == "Y":
             nb_indexed_reads += 1
         else:
-            if numCycles and numCycles != read['NumCycles']:
+            if numCycles and numCycles != read["NumCycles"]:
                 logging.warn("NumCycles in not coherent")
             else:
-                numCycles = read['NumCycles']
+                numCycles = read["NumCycles"]
 
     if reads:
-        return "{0}x{1}".format(nb_reads-nb_indexed_reads, numCycles)
+        return "{0}x{1}".format(nb_reads - nb_indexed_reads, numCycles)
     return None
 
 
@@ -444,16 +460,16 @@ def xml_to_dict(root):
             if [x in current for x in root.attrib]:
                 current.update(root.attrib)
             else:
-                current.update({'attribs': root.attribs})
+                current.update({"attribs": root.attribs})
         else:
             current = root.attrib
     if root.text and root.text.strip() != "":
         if current:
-            if 'text' not in current:
-                current['text'] = root.text
+            if "text" not in current:
+                current["text"] = root.text
             else:
                 # you're really pushing here, pal
-                current['xml_text'] = root.text
+                current["xml_text"] = root.text
         else:
             current = root.text
     return {root.tag: current}
@@ -478,8 +494,8 @@ class CycleTimesParser(object):
         start time and the last record of each cycle as end time
         """
         data = []
-        date_format = '%m/%d/%Y-%H:%M:%S.%f'
-        with open(self.path, 'r') as file:
+        date_format = "%m/%d/%Y-%H:%M:%S.%f"
+        with open(self.path, "r") as file:
             cycle_times = file.readlines()
             # if file is empty, return
             if not cycle_times:
@@ -491,37 +507,36 @@ class CycleTimesParser(object):
                 cycle_list = cycle_line.split()
                 cycle_time_obj = {}
                 # parse datetime
-                cycle_time_obj['datetime'] = datetime.strptime(
-                    "{date}-{time}".format(
-                        date=cycle_list[0],
-                        time=cycle_list[1]),
-                    date_format)
+                cycle_time_obj["datetime"] = datetime.strptime(
+                    "{date}-{time}".format(date=cycle_list[0], time=cycle_list[1]),
+                    date_format,
+                )
                 # parse cycle number
-                cycle_time_obj['cycle'] = int(cycle_list[3])
+                cycle_time_obj["cycle"] = int(cycle_list[3])
                 # add object in the list
                 data.append(cycle_time_obj)
 
         # take the first record as current cycle
         current_cycle = {
-            'cycle_number': data[0]['cycle'],
-            'start': data[0]['datetime'],
-            'end': data[0]['datetime']
+            "cycle_number": data[0]["cycle"],
+            "start": data[0]["datetime"],
+            "end": data[0]["datetime"],
         }
         # compare each record with current cycle (except the first one)
         for record in data[1:]:
             # if we are at the same cycle
-            if record['cycle'] == current_cycle['cycle_number']:
+            if record["cycle"] == current_cycle["cycle_number"]:
                 # override end of cycle with current record
-                current_cycle['end'] = record['datetime']
+                current_cycle["end"] = record["datetime"]
             # if a new cycle starts
             else:
                 # save previous cycle
                 self.cycles.append(current_cycle)
                 # initialize new current_cycle
                 current_cycle = {
-                    'cycle_number': record['cycle'],
-                    'start': record['datetime'],
-                    'end': record['datetime']
+                    "cycle_number": record["cycle"],
+                    "start": record["datetime"],
+                    "end": record["datetime"],
                 }
         # the last records is not saved inside the loop
         if current_cycle not in self.cycles:
@@ -529,7 +544,6 @@ class CycleTimesParser(object):
 
 
 class StatsParser(object):
-
     def __init__(self, path):
         if os.path.exists(path):
             self.path = path
