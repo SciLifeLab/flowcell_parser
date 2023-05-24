@@ -51,7 +51,7 @@ class RunParser(object):
 
         # These three are generated post-demultiplexing and could thus
         # potentially be replaced by reading from stats.json
-        lanebarcode_path = os.path.join(self.path, #TODO: after demux with bcl2fastq: check that these files exist
+        lanebarcode_path = os.path.join(self.path,
                                demultiplexing_dir,
                                'Reports',
                                'html',
@@ -160,7 +160,7 @@ class DemuxSummaryParser(object):
         else:
             raise os.error("DemuxSummary folder {0} cannot be found".format(path))
 
-    def parse(self): #TODO: check that this works with novaseqxplus
+    def parse(self):
         # will only save the 50 more frequent indexes
         pattern = re.compile('DemuxSummaryF1L([0-9]).txt')
         for file in glob.glob(os.path.join(self.path, 'DemuxSummaryF1L?.txt')):
