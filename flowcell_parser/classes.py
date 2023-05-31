@@ -88,11 +88,15 @@ class RunParser(object):
         except OSError as e:
             self.log.info(str(e))
             self.runparameters = None
-        try:
-            self.samplesheet = SampleSheetParser(samplesheet_path)
-        except OSError as e:
-            self.log.info(str(e))
+        # TODO NovaSeqXPlus has a differently formatted samplesheet, so omit trying to parse it unti we can deal with it
+        if "NovaSeqXPlus" in self.path:
             self.samplesheet = None
+        else:
+            try:
+                self.samplesheet = SampleSheetParser(samplesheet_path)
+            except OSError as e:
+                self.log.info(str(e))
+                self.samplesheet = None
         try:
             self.lanebarcodes = LaneBarcodeParser(lanebarcode_path)
         except OSError as e:
