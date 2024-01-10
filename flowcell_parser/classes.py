@@ -14,7 +14,7 @@ from io import open
 
 class RunParser(object):
     """Parses an Illumina run folder. It generates data for statusdb
-    notable attributes :
+    notable attributes:
 
     :RunInfoParser runinfo: see RunInfo
     :RunParametersParser runparameters: see RunParametersParser
@@ -28,11 +28,11 @@ class RunParser(object):
             self.parse()
             self.create_db_obj()
         else:
-            raise os.error(" flowcell cannot be found at {0}".format(path))
+            raise os.error("Flowcell cannot be found at {0}".format(path))
 
-    def parse(self, demultiplexingDir='Demultiplexing'):
+    def parse(self, demultiplexing_dir='Demultiplexing'):
         """Tries to parse as many files as possible from a run folder"""
-        pattern = r'(\d{6})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
+        pattern = r'(\d{6,8})_([ST-]*\w+\d+)_\d+_([AB]?)([A-Z0-9\-]+)'
         m = re.match(pattern, os.path.basename(os.path.abspath(self.path)))
         instrument = m.group(2)
         # NextSeq2000 has a different FC ID pattern that ID contains the first position letter
@@ -42,64 +42,64 @@ class RunParser(object):
             fc_name = m.group(4)
         # For MiSeq we parse the samplesheet "run_folder/SampleSheet_copy.csv"
         if "M0" in instrument:
-            ss_path = os.path.join(self.path, 'SampleSheet_copy.csv')
+            samplesheet_path = os.path.join(self.path, 'SampleSheet_copy.csv')
         else:
-            ss_path = os.path.join(self.path, 'SampleSheet.csv')
-        rinfo_path = os.path.join(self.path, 'RunInfo.xml')
-        rpar_path = os.path.join(self.path, 'runParameters.xml')
+            samplesheet_path = os.path.join(self.path, 'SampleSheet.csv')
+        run_info_path = os.path.join(self.path, 'RunInfo.xml')
+        run_parameters_path = os.path.join(self.path, 'runParameters.xml')
         cycle_times_log = os.path.join(self.path, 'Logs', "CycleTimes.txt")
 
-        # These three are generate post-demultiplexing and could thus
+        # These three are generated post-demultiplexing and could thus
         # potentially be replaced by reading from stats.json
-        lb_path = os.path.join(self.path,
-                               demultiplexingDir,
+        lanebarcode_path = os.path.join(self.path,
+                               demultiplexing_dir,
                                'Reports',
                                'html',
                                fc_name,
                                'all', 'all', 'all',
                                'laneBarcode.html')
-        ln_path = os.path.join(self.path,
-                               demultiplexingDir,
+        lane_path = os.path.join(self.path,
+                               demultiplexing_dir,
                                'Reports',
                                'html',
                                fc_name,
                                'all', 'all', 'all',
                                'lane.html')
-        undeterminedStatsFolder = os.path.join(self.path,
-                                               demultiplexingDir,
-                                               "Stats")
-        json_path = os.path.join(self.path,
-                                 demultiplexingDir,
+        undet_stats_dir = os.path.join(self.path,
+                                            demultiplexing_dir,
+                                           "Stats")
+        demux_stats_path = os.path.join(self.path,
+                                 demultiplexing_dir,
                                  "Stats",
                                  "Stats.json")
 
         try:
-            self.runinfo = RunInfoParser(rinfo_path)
+            self.runinfo = RunInfoParser(run_info_path)
         except OSError as e:
             self.log.info(str(e))
             self.runinfo = None
         try:
-            self.runparameters = RunParametersParser(rpar_path)
+            self.runparameters = RunParametersParser(run_parameters_path)
         except OSError as e:
             self.log.info(str(e))
             self.runparameters = None
         try:
-            self.samplesheet = SampleSheetParser(ss_path)
+            self.samplesheet = SampleSheetParser(samplesheet_path)
         except OSError as e:
             self.log.info(str(e))
             self.samplesheet = None
         try:
-            self.lanebarcodes = LaneBarcodeParser(lb_path)
+            self.lanebarcodes = LaneBarcodeParser(lanebarcode_path)
         except OSError as e:
             self.log.info(str(e))
             self.lanebarcodes = None
         try:
-            self.lanes = LaneBarcodeParser(ln_path)
+            self.lanes = LaneBarcodeParser(lane_path)
         except OSError as e:
             self.log.info(str(e))
             self.lanes = None
         try:
-            self.undet = DemuxSummaryParser(undeterminedStatsFolder)
+            self.undet = DemuxSummaryParser(undet_stats_dir)
         except OSError as e:
             self.log.info(str(e))
             self.undet = None
@@ -109,7 +109,7 @@ class RunParser(object):
             self.log.info(str(e))
             self.time_cycles = None
         try:
-            self.json_stats = StatsParser(json_path)
+            self.json_stats = StatsParser(demux_stats_path)
         except OSError as e:
             self.log.info(str(e))
             self.json_stats = None
@@ -187,7 +187,7 @@ class LaneBarcodeParser(object):
             self.path = path
             self.parse()
         else:
-            raise os.error(" laneBarcode.html cannot be found at {0}".format(path))
+            raise os.error("LaneBarcode.html cannot be found at {0}".format(path))
 
     def parse(self):
         self.sample_data = []
@@ -197,31 +197,31 @@ class LaneBarcodeParser(object):
             flowcell_table = bsoup.find_all('table')[1]
             lane_table = bsoup.find_all('table')[2]
 
-            keys = []
-            values = []
+            flowcell_keys = []
+            flowcell_values = []
             for th in flowcell_table.find_all('th'):
-                keys.append(th.text)
+                flowcell_keys.append(th.text)
             for td in flowcell_table.find_all('td'):
-                values.append(td.text)
+                flowcell_values.append(td.text)
 
-            self.flowcell_data = dict(zip(keys, values))
+            self.flowcell_data = dict(zip(flowcell_keys, flowcell_values))
 
-            keys = []
-            rows = lane_table.find_all('tr')
-            for row in rows[0:]:
+            lane_keys = []
+            lane_rows = lane_table.find_all('tr')
+            for row in lane_rows[0:]:
                 if len(row.find_all('th')):
                     # this is the header row
                     for th in row.find_all('th'):
                         key = th.text.replace(
                             '<br/>', ' ').replace(
                                 '&gt;', '>')
-                        keys.append(key)
+                        lane_keys.append(key)
                 elif len(row.find_all('td')):
-                    values = []
+                    lane_values = []
                     for td in row.find_all('td'):
-                        values.append(td.text.replace('NaN', '0') if td.text else '0')
+                        lane_values.append(td.text.replace('NaN', '0') if td.text else '0')
 
-                    d = dict(zip(keys, values))
+                    d = dict(zip(lane_keys, lane_values))
                     self.sample_data.append(d)
 
 
@@ -239,10 +239,9 @@ class SampleSheetParser(object):
         if os.path.exists(path):
             self.parse(path)
         else:
-            raise os.error(" sample sheet cannot be found at {0}".format(path))
+            raise os.error("Sample sheet cannot be found at {0}".format(path))
 
     def parse(self, path):
-        flag = None
         header = {}
         reads = []
         settings = []
@@ -324,7 +323,7 @@ class RunInfoParser(object):
         if os.path.exists(path):
             self.parse()
         else:
-            raise os.error(" run info cannot be found at {0}".format(path))
+            raise os.error("Run info cannot be found at {0}".format(path))
 
     def parse(self):
         data = {}
