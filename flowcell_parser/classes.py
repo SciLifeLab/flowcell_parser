@@ -244,7 +244,7 @@ class SampleSheetParser(object):
     def parse(self, path):
         header = {}
         reads = []
-        settings = []
+        settings = {}
         csvlines = []
         data = []
         flag = 'data'  # in case of HiSeq samplesheet only data section is present
@@ -277,7 +277,13 @@ class SampleSheetParser(object):
                     elif flag == 'READS':
                         reads.append(tokens[0])
                     elif flag == 'SETTINGS':
-                        settings.append(tokens[0])
+                        if len(tokens) < 2:
+                            self.log.error("file {} does not have a",
+                                           "correct format.".format(path))
+                            raise RuntimeError("Could not parse the",
+                                               "samplesheet, the file does",
+                                               "not seem to have a correct format.")
+                        settings[tokens[0]] = tokens[1]
                     elif flag == 'data':
                         csvlines.append(line)
             reader = csv.DictReader(csvlines)
